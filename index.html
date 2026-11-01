@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>கோழி பண்ணை</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2e8b57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #f3f6f0; --surface: #ffffff; --text: #1b2a1e; --muted: #6c786d;
+    --accent: #2e8b57; --accent2: #f2a33a; --danger: #d64545; --soft: #e6f3ea;
+    --shadow: 0 6px 20px rgba(20, 60, 35, .08); color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f140f; --surface: #182119; --text: #eef5ee; --muted: #97a897;
+      --accent: #58c98a; --accent2: #f5b65a; --danger: #ff7b7b; --soft: #1f2d22;
+      --shadow: 0 6px 20px rgba(0, 0, 0, .35); color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Noto Sans Tamil", sans-serif;
+    padding: env(safe-area-inset-top, 0px) 14px env(safe-area-inset-bottom, 0px);
+    font-size: 16px;
+  }
+  .app { max-width: 560px; margin: 0 auto; padding: 18px 0 40px; }
+
+  .hero {
+    background: linear-gradient(135deg, #2e8b57 0%, #1f6b43 100%);
+    color: #fff; border-radius: 22px; padding: 20px; box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+  }
+  .hero h1 { font-size: 1.5rem; margin: 0; }
+  .hero .date { opacity: .85; font-size: 14px; margin-top: 4px; }
+  .hero .big { font-size: 2.4rem; font-weight: 700; margin-top: 14px; }
+  .hero .big small { font-size: 1rem; font-weight: 400; opacity: .85; }
+  .hero .deco { position: absolute; right: -10px; top: -10px; font-size: 90px; opacity: .15; }
+  .hero-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+  .saving { font-size: 12px; opacity: .85; min-height: 16px; }
+  .pdf-btn {
+    background: #fff; color: var(--accent); border: none; border-radius: 12px;
+    padding: 10px 14px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .pdf-btn:disabled { opacity: .6; }
+
+  .alert {
+    background: #fff4e0; color: #7a4a00; border-radius: 12px;
+    padding: 10px 12px; font-size: 14px; margin-bottom: 8px;
+  }
+  .alert.danger { background: #fde5e5; color: #8a1f1f; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .alert { background: #3a2c12; color: #ffd28a; }
+    :root:not([data-theme="light"]) .alert.danger { background: #3d1c1c; color: #ffb3b3; }
+  }
+
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+  .stat { background: var(--surface); border-radius: 16px; padding: 14px; box-shadow: var(--shadow); }
+  .stat .icon { font-size: 20px; }
+  .stat .label { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .stat .value { font-size: 1.35rem; font-weight: 700; margin-top: 2px; }
+  .stat.wide { grid-column: span 2; display: flex; justify-content: space-between; align-items: center; }
+  .stat.low .value { color: var(--danger); }
+  .pos { color: var(--accent); }
+  .neg { color: var(--danger); }
+
+  .card {
+    background: var(--surface); border-radius: 18px; padding: 16px;
+    margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+  .card h2 { font-size: 1.05rem; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+
+  .chart { display: flex; align-items: flex-end; gap: 8px; height: 130px; padding-top: 10px; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+  .bar {
+    width: 100%; max-width: 34px; border-radius: 8px 8px 4px 4px; min-height: 4px;
+    background: linear-gradient(180deg, var(--accent2), var(--accent));
+    transition: height .4s ease;
+  }
+  .bar-val { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .bar-day { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  .tabs {
+    display: flex; gap: 6px; background: var(--surface); padding: 5px;
+    border-radius: 16px; margin-bottom: 14px; box-shadow: var(--shadow); overflow-x: auto;
+  }
+  .tab {
+    flex: 1; background: transparent; color: var(--muted); border: none; border-radius: 12px;
+    padding: 10px 6px; font: inherit; font-size: 14px; cursor: pointer; white-space: nowrap;
+  }
+  .tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  input, select {
+    width: 100%; padding: 12px; font: inherit; font-size: 16px;
+    border: 1px solid transparent; border-radius: 12px; background: var(--bg); color: var(--text);
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; min-width: 0; }
+
+  button.primary {
+    width: 100%; margin-top: 14px; padding: 13px; font: inherit; font-size: 16px;
+    font-weight: 600; border: none; border-radius: 12px;
+    background: var(--accent); color: #fff; cursor: pointer;
+  }
+  button.primary:active { transform: scale(.98); }
+
+  .entry {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--bg);
+  }
+  .entry:last-child { border-bottom: none; }
+  .entry .ico {
+    width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--soft); font-size: 18px; flex-shrink: 0;
+  }
+  .entry .main { font-weight: 600; }
+  .entry .meta { font-size: 13px; color: var(--muted); }
+  .entry .amt { font-weight: 700; white-space: nowrap; }
+  .del { background: transparent; border: none; color: var(--danger); font-size: 20px; cursor: pointer; padding: 2px 6px; }
+  .empty { color: var(--muted); text-align: center; padding: 18px 0; font-size: 14px; }
+  .hidden { display: none; }
+  .feed-summary { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hero">
+    <div class="deco">🐔</div>
+    <div class="hero-row">
+      <div>
+        <h1>கோழி பண்ணை</h1>
+        <div class="date" id="today"></div>
+      </div>
+      <button class="pdf-btn" id="pdfBtn">📄 PDF அறிக்கை</button>
+    </div>
+    <div class="big"><span id="totalBirds">0</span> <small>கோழிகள்</small></div>
+    <div class="saving" id="saveState"></div>
+  </div>
+
+  <div id="alerts" style="margin-top:14px"></div>
+
+  <div class="stats">
+    <div class="stat"><div class="icon">🥚</div><div class="label">இன்றைய முட்டைகள்</div><div class="value" id="todayEggs">0</div></div>
+    <div class="stat"><div class="icon">📈</div><div class="label">இந்த வார முட்டைகள்</div><div class="value" id="weekEggs">0</div></div>
+    <div class="stat" id="feedCard"><div class="icon">🌾</div><div class="label">தீவன இருப்பு</div><div class="value" id="feedStock">0 கிலோ</div></div>
+    <div class="stat"><div class="icon">☠️</div><div class="label">மொத்த இழப்பு</div><div class="value" id="totalLoss">0</div></div>
+    <div class="stat wide">
+      <div><div class="label">மொத்த லாபம் / நஷ்டம்</div><div class="value" id="profit">₹0</div></div>
+      <div style="font-size:28px">💰</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📊 கடந்த 7 நாள் முட்டை உற்பத்தி</h2>
+    <div class="chart" id="chart"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="birds">கோழிகள்</button>
+    <button class="tab" data-tab="eggs">முட்டை</button>
+    <button class="tab" data-tab="feed">தீவனம்</button>
+    <button class="tab" data-tab="accounts">கணக்கு</button>
+    <button class="tab" data-tab="alerts">நினைவூட்டல்</button>
+  </div>
+
+  <section id="tab-birds">
+    <div class="card">
+      <h2>🐣 கோழி குழு சேர்</h2>
+      <form id="birdForm">
+        <div class="row">
+          <div><label>இனம்</label><select id="breed"><option>நாட்டுக்கோழி</option><option>அசில் கோழி</option></select></div>
+          <div><label>எண்ணிக்கை</label><input id="birdCount" type="number" min="1" required></div>
+        </div>
+        <label>Batch code</label>
+        <input id="batch" placeholder="எ.கா. B-2026-01" required>
+        <label>வாங்கிய தேதி</label>
+        <input id="birdDate" type="date" required>
+        <button class="primary" type="submit">சேர்</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>☠️ இழப்பு பதிவு</h2>
+      <form id="lossForm">
+        <label>வயது வகை</label>
+        <select id="lossAge">
+          <option>இளம் குஞ்சு</option>
+          <option>ஒரு மாத குஞ்சு</option>
+          <option>இரண்டு மாத குஞ்சு</option>
+          <option>மூன்று மாத குஞ்சு</option>
+          <option>ஐந்து மாத கோழி</option>
+          <option>ஆறு மாத கோழி</option>
+          <option>பெரிய கோழி</option>
+        </select>
+        <label>Batch code</label>
+        <select id="lossBatch"></select>
+        <div class="row">
+          <div><label>இறந்த எண்ணிக்கை</label><input id="lossCount" type="number" min="1" required></div>
+          <div><label>தேதி</label><input id="lossDate" type="date" required></div>
+        </div>
+        <button class="primary" type="submit" style="background:var(--danger)">பதிவு செய்</button>
+      </form>
+      <div id="lossList" style="margin-top:12px"></div>
+    </div>
+    <div class="card"><h2>🐔 கோழி குழுக்கள்</h2><div id="birdList"></div></div>
+  </section>
+
+  <section id="tab-eggs" class="hidden">
+    <div class="card">
+      <h2>🥚 முட்டை பதிவு</h2>
+      <form id="eggForm">
+        <div class="row">
+          <div><label>தேதி</label><input id="eggDate" type="date" required></div>
+          <div><label>முட்டை எண்ணிக்கை</label><input id="eggCount" type="number" min="0" required></div>
+        </div>
+        <button class="primary" type="submit">பதிவு செய்</button>
+      </form>
+    </div>
+    <div class="card"><h2>சமீபத்திய பதிவுகள்</h2><div id="eggList"></div></div>
+  </section>
+
+  <section id="tab-feed" class="hidden">
+    <div class="card">
+      <h2>🌾 தீவன இருப்பு</h2>
+      <div class="feed-summary" id="feedSummary"></div>
+      <form id="feedForm">
+        <div class="row">
+          <div><label>வகை</label>
+            <select id="feedType">
+              <option value="in">வாங்கியது (+)</option>
+              <option value="out">பயன்படுத்தியது (−)</option>
+            </select>
+          </div>
+          <div><label>தீவன பொருள்</label>
+            <select id="feedItem">
+              <option>அரிசி</option>
+              <option>கம்பு</option>
+              <option>சோளம்</option>
+              <option>கம்பெனி தீவனம்</option>
+              <option>இதர பொருட்கள்</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div><label>கிலோ</label><input id="feedKg" type="number" min="0.1" step="0.1" required></div>
+          <div><label>மொத்த விலை (₹) – வாங்கியபோது</label><input id="feedAmt" type="number" min="0" step="0.01"></div>
+        </div>
+        <label>தேதி</label>
+        <input id="feedDate" type="date" required>
+        <button class="primary" type="submit">சேர்</button>
+      </form>
+      <label>குறைந்த இருப்பு எச்சரிக்கை (கிலோ)</label>
+      <div class="row">
+        <input id="feedMin" type="number" min="0" step="1">
+        <button class="primary" id="saveMin" type="button" style="margin-top:0;width:auto;padding:0 16px">சேமி</button>
+      </div>
+    </div>
+    <div class="card"><h2>தீவன பதிவுகள்</h2><div id="feedList"></div></div>
+  </section>
+
+  <section id="tab-accounts" class="hidden">
+    <div class="card">
+      <h2>💸 வரவு / செலவு</h2>
+      <form id="accForm">
+        <div class="row">
+          <div>
+            <label>வகை</label>
+            <select id="accType">
+              <option value="out">செலவு (மருந்து, இதர)</option>
+              <option value="in">வருமானம் (முட்டை, விற்பனை)</option>
+            </select>
+          </div>
+          <div><label>தொகை (₹)</label><input id="accAmount" type="number" min="0" step="0.01" required></div>
+        </div>
+        <label>விவரம்</label>
+        <input id="accNote" placeholder="எ.கா. 20 கோழி விற்பனை" required>
+        <label>Batch code (விற்பனை என்றால்)</label>
+        <select id="accBatch"></select>
+        <label>தேதி</label>
+        <input id="accDate" type="date" required>
+        <button class="primary" type="submit">சேர்</button>
+      </form>
+    </div>
+    <div class="card"><h2>கணக்குப் பதிவுகள்</h2><div id="accList"></div></div>
+  </section>
+
+  <section id="tab-alerts" class="hidden">
+    <div class="card">
+      <h2>🔔 தடுப்பூசி / நினைவூட்டல்</h2>
+      <form id="alertForm">
+        <label>நினைவூட்டல்</label>
+        <input id="alertText" placeholder="எ.கா. ராணிகெட் தடுப்பூசி" required>
+        <label>தேதி</label>
+        <input id="alertDate" type="date" required>
+        <button class="primary" type="submit">சேர்</button>
+      </form>
+    </div>
+    <div class="card"><h2>வரவிருக்கும் நினைவூட்டல்கள்</h2><div id="alertList"></div></div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  const DEFAULTS = { birds: [], eggs: [], accounts: [], alerts: [], losses: [], feed: [], feedMin: 50, nextId: 1 };
+  const state = JSON.parse(JSON.stringify(DEFAULTS));
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const $ = id => document.getElementById(id);
+  const uid = () => state.nextId++;
+
+  function daysAgo(n) {
+    const d = new Date(); d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  }
+  const eggsOn = day => state.eggs.filter(e => e.date === day).reduce((s, e) => s + Number(e.count), 0);
+  const losses = () => state.losses.reduce((s, l) => s + Number(l.count), 0);
+  const totalBirdsNow = () => state.birds.reduce((s, b) => s + Number(b.count), 0) - losses();
+  const feedStock = () => state.feed.reduce((s, f) => s + (f.type === 'in' ? Number(f.kg) : -Number(f.kg)), 0);
+  const feedCost = () => state.feed.reduce((s, f) => s + Number(f.amt || 0), 0);
+  const feedCostBy = () => {
+    const m = {};
+    state.feed.forEach(f => { if (f.type === 'in') m[f.item || 'தீவனம்'] = (m[f.item || 'தீவனம்'] || 0) + Number(f.amt || 0); });
+    return m;
+  };
+  const profitTotal = () => state.accounts.reduce((s, a) => s + (a.type === 'in' ? Number(a.amount) : -Number(a.amount)), 0) - feedCost();
+
+  // ---------- Storage (per-user, persistent) ----------
+  const KEY = 'kozhi_app_state_v1';
+  let ready = false, applying = false, saveTimer = null;
+  function persist() {
+    if (!ready || applying) return;
+    $('saveState').textContent = 'சேமிக்கிறது...';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(state));
+        $('saveState').textContent = '✓ சேமிக்கப்பட்டது';
+      } catch (err) {
+        console.error(err); $('saveState').textContent = 'சேமிப்பில் பிழை';
+      }
+    }, 300);
+  }
+
+  // ---------- Rendering ----------
+  function entry(ico, main, meta, amt, amtClass, onDelete) {
+    const row = document.createElement('div');
+    row.className = 'entry';
+    row.innerHTML = `<div style="display:flex;gap:10px;align-items:center;min-width:0">
+        <div class="ico">${ico}</div>
+        <div style="min-width:0"><div class="main"></div><div class="meta"></div></div>
+      </div>`;
+    row.querySelector('.main').textContent = main;
+    row.querySelector('.meta').textContent = meta;
+    if (amt !== null) {
+      const a = document.createElement('div');
+      a.className = 'amt ' + (amtClass || ''); a.textContent = amt;
+      row.appendChild(a);
+    }
+    const d = document.createElement('button');
+    d.className = 'del'; d.textContent = '×'; d.setAttribute('aria-label', 'நீக்கு');
+    d.addEventListener('click', onDelete);
+    row.appendChild(d);
+    return row;
+  }
+  const fill = (el, nodes, emptyText) => {
+    el.innerHTML = '';
+    if (!nodes.length) { el.innerHTML = `<div class="empty">${emptyText}</div>`; return; }
+    nodes.forEach(n => el.appendChild(n));
+  };
+
+  function renderChart() {
+    const chart = $('chart'); chart.innerHTML = '';
+    const days = [...Array(7)].map((_, i) => daysAgo(6 - i));
+    const vals = days.map(eggsOn);
+    const max = Math.max(1, ...vals);
+    days.forEach((d, i) => {
+      const wrap = document.createElement('div'); wrap.className = 'bar-wrap';
+      const v = document.createElement('div'); v.className = 'bar-val'; v.textContent = vals[i];
+      const b = document.createElement('div'); b.className = 'bar';
+      b.style.height = (vals[i] / max * 100) + '%';
+      const lbl = document.createElement('div'); lbl.className = 'bar-day';
+      lbl.textContent = d === todayStr ? 'இன்று' : d.slice(8, 10) + '/' + d.slice(5, 7);
+      wrap.append(v, b, lbl); chart.appendChild(wrap);
+    });
+  }
+
+  function renderAlerts() {
+    const box = $('alerts'); box.innerHTML = '';
+    const stock = feedStock();
+    if (state.feedMin > 0 && stock <= state.feedMin) {
+      const d = document.createElement('div');
+      d.className = 'alert danger';
+      d.textContent = `🌾 தீவனம் குறைவு! மீதம் ${stock.toFixed(1)} கிலோ (எச்சரிக்கை அளவு ${state.feedMin} கிலோ)`;
+      box.appendChild(d);
+    }
+    state.alerts.filter(al => al.date <= todayStr).forEach(al => {
+      const d = document.createElement('div'); d.className = 'alert';
+      d.textContent = '💉 இன்று / தாமதம்: ' + al.text; box.appendChild(d);
+    });
+  }
+
+  function renderAll() {
+    persist();
+
+
+
+    const batches = [...new Set(state.birds.map(b => b.batch).filter(Boolean))];
+    ['lossBatch', 'accBatch'].forEach(id => {
+      const sel = $(id); const prev = sel.value;
+      sel.innerHTML = id === 'accBatch' ? '<option value="">பொது</option>' : '';
+      batches.forEach(x => { const o = document.createElement('option'); o.value = x; o.textContent = x; sel.appendChild(o); });
+      if (prev) sel.value = prev;
+    });
+
+    fill($('birdList'), state.birds.map(b => entry('🐔', `${b.breed} — ${b.count} கோழிகள்`,
+      `Batch ${b.batch || '-'} · வாங்கிய தேதி ${b.date}`, null, '',
+      () => { state.birds = state.birds.filter(x => x.id !== b.id); renderAll(); })), 'கோழி குழுக்கள் இல்லை');
+
+    fill($('lossList'), [...state.losses].sort((a, b) => b.date.localeCompare(a.date)).map(l =>
+      entry('☠️', `${l.age || 'இழப்பு'} — ${l.count}`, `Batch ${l.batch || '-'} · ${l.date}`, null, '',
+        () => { state.losses = state.losses.filter(x => x.id !== l.id); renderAll(); })),
+      'இழப்பு பதிவுகள் இல்லை');
+
+    fill($('eggList'), [...state.eggs].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 15).map(e =>
+      entry('🥚', `${e.count} முட்டைகள்`, e.date, null, '',
+        () => { state.eggs = state.eggs.filter(x => x.id !== e.id); renderAll(); })), 'பதிவுகள் இல்லை');
+
+    const stock = feedStock();
+    const costs = feedCostBy();
+    const costText = Object.keys(costs).map(k => `${k} ₹${costs[k].toFixed(2)}`).join(' · ');
+    $('feedSummary').textContent = `தற்போதைய இருப்பு: ${stock.toFixed(1)} கிலோ · எச்சரிக்கை அளவு: ${state.feedMin} கிலோ` +
+      (costText ? ` · மொத்த தீவன செலவு ₹${feedCost().toFixed(2)} (${costText})` : '');
+    if (document.activeElement !== $('feedMin')) $('feedMin').value = state.feedMin;
+    fill($('feedList'), [...state.feed].sort((a, b) => b.date.localeCompare(a.date)).map(f =>
+      entry(f.type === 'in' ? '📦' : '🌾',
+        `${f.type === 'in' ? 'வாங்கியது' : 'பயன்படுத்தியது'} · ${f.item || 'தீவனம்'} ${f.kg} கிலோ`,
+        f.date + (f.type === 'in' && f.amt ? ` · ₹${Number(f.amt).toFixed(2)}` : ''),
+        (f.type === 'in' ? '+' : '−') + f.kg + ' கி', f.type === 'in' ? 'pos' : 'neg',
+        () => { state.feed = state.feed.filter(x => x.id !== f.id); renderAll(); })), 'தீவன பதிவுகள் இல்லை');
+
+    fill($('accList'), [...state.accounts].sort((a, b) => b.date.localeCompare(a.date)).map(a =>
+      entry(a.type === 'in' ? '💰' : '🧾', a.note,
+        (a.batch ? 'Batch ' + a.batch + ' · ' : '') + a.date,
+        (a.type === 'in' ? '+' : '−') + '₹' + Number(a.amount).toFixed(2),
+        a.type === 'in' ? 'pos' : 'neg',
+        () => { state.accounts = state.accounts.filter(x => x.id !== a.id); renderAll(); })), 'பதிவுகள் இல்லை');
+
+    fill($('alertList'), [...state.alerts].sort((a, b) => a.date.localeCompare(b.date)).map(al =>
+      entry('💉', al.text, al.date, null, '',
+        () => { state.alerts = state.alerts.filter(x => x.id !== al.id); renderAll(); })), 'நினைவூட்டல்கள் இல்லை');
+
+    const birds = totalBirdsNow();
+    const week = [...Array(7)].map((_, i) => daysAgo(i)).reduce((s, d) => s + eggsOn(d), 0);
+    const profit = profitTotal();
+    $('totalBirds').textContent = birds;
+    $('todayEggs').textContent = eggsOn(todayStr);
+    $('weekEggs').textContent = week;
+    $('totalLoss').textContent = losses();
+    $('feedStock').textContent = stock.toFixed(1) + ' கிலோ';
+    $('feedCard').classList.toggle('low', state.feedMin > 0 && stock <= state.feedMin);
+    const pEl = $('profit');
+    pEl.textContent = (profit < 0 ? '-' : '') + '₹' + Math.abs(profit).toFixed(2);
+    pEl.className = 'value ' + (profit < 0 ? 'neg' : 'pos');
+
+    renderAlerts();
+    renderChart();
+  }
+
+  // ---------- PDF report ----------
+  function buildPdf() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const monthStart = todayStr.slice(0, 8) + '01';
+    const monthEggs = state.eggs.filter(e => e.date >= monthStart && e.date <= todayStr)
+      .reduce((s, e) => s + Number(e.count), 0);
+    const income = state.accounts.filter(a => a.type === 'in').reduce((s, a) => s + Number(a.amount), 0);
+    const expense = state.accounts.filter(a => a.type === 'out').reduce((s, a) => s + Number(a.amount), 0);
+
+    let y = 20;
+    doc.setFontSize(18); doc.text('Poultry Farm Report', 14, y); y += 8;
+    doc.setFontSize(10); doc.setTextColor(110);
+    doc.text('Generated: ' + todayStr, 14, y); y += 10;
+    doc.setTextColor(0);
+
+    doc.setFontSize(13); doc.text('Summary', 14, y); y += 7;
+    doc.setFontSize(11);
+    const rows = [
+      ['Birds alive', String(totalBirdsNow())],
+      ['Birds lost (total)', String(losses())],
+      ['Eggs this month', String(monthEggs)],
+      ['Feed in stock (kg)', feedStock().toFixed(1)],
+      ['Feed alert level (kg)', String(state.feedMin)],
+      ['Total income (Rs)', income.toFixed(2)],
+      ['Total expenses (Rs)', expense.toFixed(2)],
+      ['Net profit / loss (Rs)', profitTotal().toFixed(2)]
+    ];
+    rows.forEach(([k, v]) => { doc.text(k, 14, y); doc.text(v, 110, y, { align: 'right' }); y += 7; });
+
+    y += 5;
+    doc.setFontSize(13); doc.text('Recent transactions', 14, y); y += 7;
+    doc.setFontSize(10);
+    [...state.accounts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20).forEach(a => {
+      if (y > 280) { doc.addPage(); y = 20; }
+      const sign = a.type === 'in' ? '+' : '-';
+      doc.text(a.date, 14, y);
+      doc.text(String(a.note).slice(0, 50), 45, y);
+      doc.text(sign + Number(a.amount).toFixed(2), 190, y, { align: 'right' });
+      y += 6;
+    });
+    if (!state.accounts.length) doc.text('No transactions recorded.', 14, y);
+    return doc;
+  }
+
+  $('pdfBtn').addEventListener('click', async () => {
+    const btn = $('pdfBtn');
+    btn.disabled = true;
+    try {
+      if (!window.jspdf) throw new Error('PDF library not loaded');
+      const pdf = buildPdf();
+      const bytes = pdf.output('arraybuffer');
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const file = new File([blob], 'kozhi_report_' + todayStr + '.pdf', { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Poultry Report' });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = file.name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('PDF சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['birds', 'eggs', 'feed', 'accounts', 'alerts'].forEach(t =>
+        $('tab-' + t).classList.toggle('hidden', t !== btn.dataset.tab));
+    });
+  });
+
+  // ---------- Forms ----------
+  $('today').textContent = 'இன்று ' + todayStr;
+  ['birdDate', 'eggDate', 'accDate', 'alertDate', 'lossDate', 'feedDate'].forEach(id => $(id).value = todayStr);
+
+  $('birdForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.birds.push({ id: uid(), breed: $('breed').value, batch: $('batch').value.trim(),
+      count: Number($('birdCount').value), date: $('birdDate').value });
+    e.target.reset(); $('birdDate').value = todayStr; renderAll();
+  });
+  $('lossForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.losses.push({ id: uid(), age: $('lossAge').value, batch: $('lossBatch').value,
+      count: Number($('lossCount').value), date: $('lossDate').value });
+    e.target.reset(); $('lossDate').value = todayStr; renderAll();
+  });
+  $('eggForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.eggs.push({ id: uid(), count: Number($('eggCount').value), date: $('eggDate').value });
+    e.target.reset(); $('eggDate').value = todayStr; renderAll();
+  });
+  $('feedForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const type = $('feedType').value;
+    state.feed.push({ id: uid(), type, item: $('feedItem').value,
+      kg: Number($('feedKg').value),
+      amt: type === 'in' ? Number($('feedAmt').value || 0) : 0,
+      date: $('feedDate').value });
+    e.target.reset(); $('feedDate').value = todayStr; renderAll();
+  });
+  $('saveMin').addEventListener('click', () => {
+    state.feedMin = Math.max(0, Number($('feedMin').value) || 0);
+    renderAll();
+  });
+  $('accForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.accounts.push({ id: uid(), type: $('accType').value,
+      amount: Number($('accAmount').value), note: $('accNote').value.trim(),
+      batch: $('accBatch').value, date: $('accDate').value });
+    e.target.reset(); $('accDate').value = todayStr; renderAll();
+  });
+  $('alertForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.alerts.push({ id: uid(), text: $('alertText').value.trim(), date: $('alertDate').value });
+    e.target.reset(); $('alertDate').value = todayStr; renderAll();
+  });
+
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) Object.assign(state, DEFAULTS, JSON.parse(raw));
+  } catch (err) { console.error(err); }
+  ready = true;
+  renderAll();
+  $('saveState').textContent = '✓ சேமிக்கப்பட்டது';
+</script>
+<script>
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
