@@ -176,7 +176,7 @@
       <h2>🐣 கோழி குழு சேர்</h2>
       <form id="birdForm">
         <div class="row">
-          <div><label>இனம்</label><input id="breed" placeholder="எ.கா. அசில்" required></div>
+          <div><label>இனம்</label><select id="breed"><option>நாட்டுக்கோழி</option><option>அசில் கோழி</option></select></div>
           <div><label>எண்ணிக்கை</label><input id="birdCount" type="number" min="1" required></div>
         </div>
         <label>வாங்கிய தேதி</label>
@@ -187,14 +187,23 @@
     <div class="card">
       <h2>☠️ இழப்பு பதிவு</h2>
       <form id="lossForm">
+        <label>வயது வகை</label>
+        <select id="lossAge">
+          <option>இளம் குஞ்சு</option>
+          <option>ஒரு மாத குஞ்சு</option>
+          <option>இரண்டு மாத குஞ்சு</option>
+          <option>மூன்று மாத குஞ்சு</option>
+          <option>ஐந்து மாத கோழி</option>
+          <option>ஆறு மாத கோழி</option>
+          <option>பெரிய கோழி</option>
+        </select>
         <div class="row">
-          <div><label>இனம் / குழு</label><select id="lossGroup"></select></div>
           <div><label>இறந்த எண்ணிக்கை</label><input id="lossCount" type="number" min="1" required></div>
+          <div><label>தேதி</label><input id="lossDate" type="date" required></div>
         </div>
-        <label>தேதி</label>
-        <input id="lossDate" type="date" required>
         <button class="primary" type="submit" style="background:var(--danger)">பதிவு செய்</button>
       </form>
+      <div id="lossList" style="margin-top:12px"></div>
     </div>
     <div class="card"><h2>🐔 கோழி குழுக்கள்</h2><div id="birdList"></div></div>
   </section>
@@ -393,14 +402,7 @@
   function renderAll() {
     persist();
 
-    const groupSel = $('lossGroup'); const prev = groupSel.value;
-    groupSel.innerHTML = '';
-    state.birds.forEach(b => {
-      const o = document.createElement('option');
-      o.value = b.id; o.textContent = `${b.breed} (${b.count})`;
-      groupSel.appendChild(o);
-    });
-    if (prev) groupSel.value = prev;
+
 
     fill($('birdList'), state.birds.map(b => {
       const lost = state.losses.filter(l => l.groupId === b.id).reduce((s, l) => s + Number(l.count), 0);
@@ -408,6 +410,11 @@
         `வாங்கிய தேதி ${b.date}${lost ? ` · இழப்பு ${lost}` : ''}`, null, '',
         () => { state.birds = state.birds.filter(x => x.id !== b.id); renderAll(); });
     }), 'கோழி குழுக்கள் இல்லை');
+
+    fill($('lossList'), [...state.losses].sort((a, b) => b.date.localeCompare(a.date)).map(l =>
+      entry('☠️', `${l.age || 'இழப்பு'} — ${l.count}`, l.date, null, '',
+        () => { state.losses = state.losses.filter(x => x.id !== l.id); renderAll(); })),
+      'இழப்பு பதிவுகள் இல்லை');
 
     fill($('eggList'), [...state.eggs].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 15).map(e =>
       entry('🥚', `${e.count} முட்டைகள்`, e.date, null, '',
@@ -546,8 +553,7 @@
   });
   $('lossForm').addEventListener('submit', e => {
     e.preventDefault();
-    if (!$('lossGroup').value) return;
-    state.losses.push({ id: uid(), groupId: Number($('lossGroup').value),
+    state.losses.push({ id: uid(), age: $('lossAge').value,
       count: Number($('lossCount').value), date: $('lossDate').value });
     e.target.reset(); $('lossDate').value = todayStr; renderAll();
   });
