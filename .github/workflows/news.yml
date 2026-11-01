@@ -1,0 +1,62 @@
+name: Daily poultry news
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch news
+        run: |
+          python3 - <<'PY'
+          import json, datetime, email.utils, urllib.parse, urllib.request
+          import xml.etree.ElementTree as ET
+          queries = [
+            ("bird flu India poultry", "en-IN", "IN:en"),
+            ("poultry disease India", "en-IN", "IN:en"),
+            ("கோழி பறவைக் காய்ச்சல்", "ta-IN", "IN:ta"),
+          ]
+          items, seen = [], set()
+          for q, hl, ceid in queries:
+              url = "https://news.google.com/rss/search?" + urllib.parse.urlencode(
+                  {"q": q, "hl": hl, "gl": "IN", "ceid": ceid})
+              data = urllib.request.urlopen(url, timeout=30).read()
+              for it in ET.fromstring(data).iter("item"):
+                  link = it.findtext("link") or ""
+                  if not link or link in seen:
+                      continue
+                  seen.add(link)
+                  items.append({
+                      "title": it.findtext("title") or "",
+                      "link": link,
+                      "date": it.findtext("pubDate") or "",
+                      "source": it.findtext("source") or "",
+                  })
+          def key(i):
+              try:
+                  return email.utils.parsedate_to_datetime(i["date"]).timestamp()
+              except Exception:
+                  return 0
+          items.sort(key=key, reverse=True)
+          out = {"updated": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                 "items": items[:30]}
+          with open("news.json", "w", encoding="utf-8") as f:
+              json.dump(out, f, ensure_ascii=False, indent=1)
+          print(len(items), "items")
+          PY
+      - name: Save news
+        run: |
+          git config user.name "news-bot"
+          git config user.email "news-bot@users.noreply.github.com"
+          git add news.json
+          git diff --cached --quiet || (git commit -m "Daily news update" && git push)
