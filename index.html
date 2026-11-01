@@ -127,6 +127,11 @@
   .empty { color: var(--muted); text-align: center; padding: 18px 0; font-size: 14px; }
   .hidden { display: none; }
   .feed-summary { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+  .wx-main { font-size: 1.6rem; font-weight: 700; }
+  .wx-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .wx-days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; font-size: 13px; text-align: center; }
+  .wx-days > div { background: var(--bg); border-radius: 12px; padding: 8px 4px; }
+  .wx-advice { margin-top: 12px; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -158,6 +163,13 @@
     </div>
   </div>
 
+  <div class="card" id="weatherCard">
+    <h2>🌤 இன்றைய வானிலை</h2>
+    <div id="weatherBody" class="feed-summary">ஏற்றப்படுகிறது...</div>
+    <div id="weatherAdvice" class="wx-advice"></div>
+    <button class="primary" id="wxBtn" type="button" style="margin-top:8px">🔄 புதுப்பி</button>
+  </div>
+
   <div class="card">
     <h2>📊 கடந்த 7 நாள் முட்டை உற்பத்தி</h2>
     <div class="chart" id="chart"></div>
@@ -176,7 +188,12 @@
       <h2>🐣 கோழி குழு சேர்</h2>
       <form id="birdForm">
         <div class="row">
-          <div><label>இனம்</label><select id="breed"><option>நாட்டுக்கோழி</option><option>அசில் கோழி</option></select></div>
+          <div><label>இனம்</label><select id="breed">
+            <option>நாட்டுக்கோழி</option>
+            <option>நாட்டு கலப்பின கோழி</option>
+            <option>கலப்பின முட்டைக்கோழி</option>
+            <option>இடைவெட்டு பெருவிடை</option>
+          </select></div>
           <div><label>எண்ணிக்கை</label><input id="birdCount" type="number" min="1" required></div>
         </div>
         <label>Batch code</label>
@@ -610,6 +627,54 @@
 </script>
 <script>
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+  // ---------- Weather ----------
+  const WX = { 0: 'தெளிவான வானம்', 1: 'பெரும்பாலும் தெளிவு', 2: 'ஓரளவு மேகமூட்டம்', 3: 'மேகமூட்டம்',
+    45: 'மூடுபனி', 48: 'மூடுபனி', 51: 'லேசான தூறல்', 53: 'தூறல்', 55: 'அதிக தூறல்',
+    61: 'லேசான மழை', 63: 'மழை', 65: 'கனமழை', 80: 'லேசான மழைத் தூறல்', 81: 'மழை', 82: 'பலத்த மழை',
+    95: 'இடியுடன் மழை', 96: 'இடியுடன் மழை', 99: 'இடியுடன் மழை' };
+
+  async function showWeather(lat, lon) {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+      '&current=temperature_2m,relative_humidity_2m,weather_code,precipitation' +
+      '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=3&timezone=auto';
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('weather');
+    const d = await r.json();
+    const c = d.current, dy = d.daily;
+    $('weatherBody').innerHTML =
+      '<div class="wx-main">' + Math.round(c.temperature_2m) + '°C · ' + (WX[c.weather_code] || 'வானிலை') + '</div>' +
+      '<div class="wx-sub">ஈரப்பதம் ' + c.relative_humidity_2m + '% · மழை ' + c.precipitation + ' மி.மீ</div>' +
+      '<div class="wx-days">' + dy.time.map((t, i) =>
+        '<div><b>' + t.slice(8, 10) + '/' + t.slice(5, 7) + '</b><br>' +
+        Math.round(dy.temperature_2m_min[i]) + '° – ' + Math.round(dy.temperature_2m_max[i]) + '°<br>🌧 ' +
+        dy.precipitation_sum[i].toFixed(1) + ' மி.மீ</div>').join('') + '</div>';
+
+    const tips = [];
+    if (c.temperature_2m >= 35 || dy.temperature_2m_max.some(t => t >= 36))
+      tips.push('🔥 வெப்பம் அதிகம்: நிழல், குளிர்ந்த குடிநீர், காற்றோட்டம் உறுதி செய்யவும்.');
+    if (dy.precipitation_sum.some(p => p >= 5))
+      tips.push('🌧 மழை வரலாம்: கொட்டகையை உலர வைத்து, ஈரம் சேராமல் பார்க்கவும்.');
+    if (dy.temperature_2m_min.some(t => t <= 15))
+      tips.push('❄️ குளிர் அதிகம்: கோழிகளுக்குக் கதகதப்பு தேவைப்படலாம்.');
+    $('weatherAdvice').innerHTML = tips.map(t => '<div class="alert">' + t + '</div>').join('');
+  }
+
+  function loadWeather() {
+    $('weatherBody').textContent = 'வானிலை ஏற்றப்படுகிறது...';
+    $('weatherAdvice').innerHTML = '';
+    if (!navigator.geolocation) { $('weatherBody').textContent = 'இந்த போனில் இருப்பிட வசதி இல்லை.'; return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        showWeather(pos.coords.latitude.toFixed(3), pos.coords.longitude.toFixed(3))
+          .catch(() => { $('weatherBody').textContent = 'வானிலை பெற முடியவில்லை. இணைய இணைப்பை சரிபார்க்கவும்.'; });
+      },
+      () => { $('weatherBody').textContent = 'இருப்பிட அனுமதி தேவை. போனில் Location அனுமதி கொடுத்து மீண்டும் புதுப்பிக்கவும்.'; },
+      { timeout: 15000, maximumAge: 600000 }
+    );
+  }
+  $('wxBtn').addEventListener('click', loadWeather);
+  loadWeather();
 </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const CACHE = 'kozhi-v3';
+const CACHE = 'kozhi-v4';
 const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
@@ -12,6 +12,7 @@ self.addEventListener('activate', e => {
   );
 });
 self.addEventListener('fetch', e => {
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
     fetch(e.request)
       .then(r => { caches.open(CACHE).then(c => c.put(e.request, r.clone())); return r; })
