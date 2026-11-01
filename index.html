@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2e8b57">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="icon" href="icons/icon-192.png">
+<link rel="icon" href="icon-192.png">
 <style>
   :root {
     --bg: #f3f6f0; --surface: #ffffff; --text: #1b2a1e; --muted: #6c786d;
@@ -219,14 +219,25 @@
       <div class="feed-summary" id="feedSummary"></div>
       <form id="feedForm">
         <div class="row">
-          <div>
-            <label>வகை</label>
+          <div><label>வகை</label>
             <select id="feedType">
               <option value="in">வாங்கியது (+)</option>
               <option value="out">பயன்படுத்தியது (−)</option>
             </select>
           </div>
+          <div><label>தீவன பொருள்</label>
+            <select id="feedItem">
+              <option>அரிசி</option>
+              <option>கம்பு</option>
+              <option>சோளம்</option>
+              <option>கம்பெனி தீவனம்</option>
+              <option>இதர பொருட்கள்</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
           <div><label>கிலோ</label><input id="feedKg" type="number" min="0.1" step="0.1" required></div>
+          <div><label>மொத்த விலை (₹) – வாங்கியபோது</label><input id="feedAmt" type="number" min="0" step="0.01"></div>
         </div>
         <label>தேதி</label>
         <input id="feedDate" type="date" required>
@@ -296,7 +307,13 @@
   const losses = () => state.losses.reduce((s, l) => s + Number(l.count), 0);
   const totalBirdsNow = () => state.birds.reduce((s, b) => s + Number(b.count), 0) - losses();
   const feedStock = () => state.feed.reduce((s, f) => s + (f.type === 'in' ? Number(f.kg) : -Number(f.kg)), 0);
-  const profitTotal = () => state.accounts.reduce((s, a) => s + (a.type === 'in' ? Number(a.amount) : -Number(a.amount)), 0);
+  const feedCost = () => state.feed.reduce((s, f) => s + Number(f.amt || 0), 0);
+  const feedCostBy = () => {
+    const m = {};
+    state.feed.forEach(f => { if (f.type === 'in') m[f.item || 'தீவனம்'] = (m[f.item || 'தீவனம்'] || 0) + Number(f.amt || 0); });
+    return m;
+  };
+  const profitTotal = () => state.accounts.reduce((s, a) => s + (a.type === 'in' ? Number(a.amount) : -Number(a.amount)), 0) - feedCost();
 
   // ---------- Storage (per-user, persistent) ----------
   const KEY = 'kozhi_app_state_v1';
@@ -397,11 +414,16 @@
         () => { state.eggs = state.eggs.filter(x => x.id !== e.id); renderAll(); })), 'பதிவுகள் இல்லை');
 
     const stock = feedStock();
-    $('feedSummary').textContent = `தற்போதைய இருப்பு: ${stock.toFixed(1)} கிலோ · எச்சரிக்கை அளவு: ${state.feedMin} கிலோ`;
+    const costs = feedCostBy();
+    const costText = Object.keys(costs).map(k => `${k} ₹${costs[k].toFixed(2)}`).join(' · ');
+    $('feedSummary').textContent = `தற்போதைய இருப்பு: ${stock.toFixed(1)} கிலோ · எச்சரிக்கை அளவு: ${state.feedMin} கிலோ` +
+      (costText ? ` · மொத்த தீவன செலவு ₹${feedCost().toFixed(2)} (${costText})` : '');
     if (document.activeElement !== $('feedMin')) $('feedMin').value = state.feedMin;
     fill($('feedList'), [...state.feed].sort((a, b) => b.date.localeCompare(a.date)).map(f =>
-      entry(f.type === 'in' ? '📦' : '🌾', `${f.type === 'in' ? 'வாங்கியது' : 'பயன்படுத்தியது'} ${f.kg} கிலோ`,
-        f.date, (f.type === 'in' ? '+' : '−') + f.kg + ' கி', f.type === 'in' ? 'pos' : 'neg',
+      entry(f.type === 'in' ? '📦' : '🌾',
+        `${f.type === 'in' ? 'வாங்கியது' : 'பயன்படுத்தியது'} · ${f.item || 'தீவனம்'} ${f.kg} கிலோ`,
+        f.date + (f.type === 'in' && f.amt ? ` · ₹${Number(f.amt).toFixed(2)}` : ''),
+        (f.type === 'in' ? '+' : '−') + f.kg + ' கி', f.type === 'in' ? 'pos' : 'neg',
         () => { state.feed = state.feed.filter(x => x.id !== f.id); renderAll(); })), 'தீவன பதிவுகள் இல்லை');
 
     fill($('accList'), [...state.accounts].sort((a, b) => b.date.localeCompare(a.date)).map(a =>
@@ -536,8 +558,11 @@
   });
   $('feedForm').addEventListener('submit', e => {
     e.preventDefault();
-    state.feed.push({ id: uid(), type: $('feedType').value,
-      kg: Number($('feedKg').value), date: $('feedDate').value });
+    const type = $('feedType').value;
+    state.feed.push({ id: uid(), type, item: $('feedItem').value,
+      kg: Number($('feedKg').value),
+      amt: type === 'in' ? Number($('feedAmt').value || 0) : 0,
+      date: $('feedDate').value });
     e.target.reset(); $('feedDate').value = todayStr; renderAll();
   });
   $('saveMin').addEventListener('click', () => {
