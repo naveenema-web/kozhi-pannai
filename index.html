@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>கோழி பண்ணை</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2e8b57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #e3f0fb; --surface: #ffffff; --text: #112033; --muted: #4a5d74;
+    --accent: #2e8b57; --accent2: #f2a33a; --danger: #d64545; --soft: #e6f3ea;
+    --shadow: 0 4px 14px rgba(20, 60, 110, .12); color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Noto Sans Tamil", sans-serif;
+    padding: env(safe-area-inset-top, 0px) 14px env(safe-area-inset-bottom, 0px);
+    font-size: 16px;
+  }
+  .app { max-width: 560px; margin: 0 auto; padding: 18px 0 40px; }
+
+  .hero {
+    background: linear-gradient(135deg, #2e8b57 0%, #1f6b43 100%);
+    color: #fff; border-radius: 22px; padding: 20px; box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+  }
+  .hero h1 { font-size: 1.5rem; margin: 0; }
+  .hero .date { opacity: .85; font-size: 14px; margin-top: 4px; }
+  .hero .big { font-size: 2.4rem; font-weight: 700; margin-top: 14px; }
+  .hero .big small { font-size: 1rem; font-weight: 400; opacity: .85; }
+  
+  .hero-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+  .saving { font-size: 12px; opacity: .85; min-height: 16px; }
+  .pdf-btn {
+    background: #fff; color: var(--accent); border: none; border-radius: 12px;
+    padding: 10px 14px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .pdf-btn:disabled { opacity: .6; }
+
+  .alert {
+    background: #fff4e0; color: #7a4a00; border-radius: 12px;
+    padding: 10px 12px; font-size: 14px; margin-bottom: 8px;
+  }
+  .alert.danger { background: #fde5e5; color: #8a1f1f; }
+
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+  .stat { background: var(--surface); border-radius: 16px; padding: 14px; box-shadow: var(--shadow); }
+  .stat .icon { font-size: 20px; }
+  .stat .label { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .stat .value { font-size: 1.35rem; font-weight: 700; margin-top: 2px; }
+  .stat.wide { grid-column: span 2; display: flex; justify-content: space-between; align-items: center; }
+  .stat.low .value { color: var(--danger); }
+  .pos { color: var(--accent); }
+  .neg { color: var(--danger); }
+
+  .card {
+    background: var(--surface); border-radius: 18px; padding: 16px;
+    margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+  .card h2 { font-size: 1.05rem; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+
+  .chart { display: flex; align-items: flex-end; gap: 8px; height: 130px; padding-top: 10px; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+  .bar {
+    width: 100%; max-width: 34px; border-radius: 8px 8px 4px 4px; min-height: 4px;
+    background: linear-gradient(180deg, var(--accent2), var(--accent));
+    transition: height .4s ease;
+  }
+  .bar-val { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .bar-day { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  .tabs {
+    display: flex; gap: 6px; background: var(--surface); padding: 5px;
+    border-radius: 16px; margin-bottom: 14px; box-shadow: var(--shadow); overflow-x: auto;
+  }
+  .tab {
+    flex: 1; background: #000000; color: #ffffff; border: 1.5px solid #000000; border-radius: 12px;
+    padding: 10px 6px; font: inherit; font-size: 14px; cursor: pointer; white-space: nowrap;
+  }
+  .tab.active { background: #000000; color: #ffffff; font-weight: 700; border-color: #ffffff; box-shadow: inset 0 0 0 1px #ffffff; }
+
+  label { display: block; font-size: 14px; font-weight: 600; color: var(--text); margin: 10px 0 4px; }
+  input, select {
+    width: 100%; padding: 12px; font: inherit; font-size: 16px;
+    border: 1.5px solid #8a96a3; border-radius: 12px; background: var(--surface); color: var(--text);
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+  input, select { font-weight: 500; }
+  input::placeholder { color: #5b6474; opacity: 1; }
+  select option { color: #1b2230; background: #ffffff; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; min-width: 0; }
+  .row > div > label { min-height: 42px; display: flex; align-items: flex-end; line-height: 1.25; }
+
+  button.primary {
+    width: 100%; margin-top: 14px; padding: 13px; font: inherit; font-size: 16px;
+    font-weight: 600; border: none; border-radius: 12px;
+    background: var(--accent); color: #fff; cursor: pointer;
+  }
+  button.primary:active { transform: scale(.98); }
+
+  .entry {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--bg);
+  }
+  .entry:last-child { border-bottom: none; }
+  .entry .ico {
+    width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--soft); font-size: 18px; flex-shrink: 0;
+  }
+  .entry .main { font-weight: 600; }
+  .entry .meta { font-size: 13px; color: var(--muted); }
+  .entry .amt { font-weight: 700; white-space: nowrap; }
+  .del { background: transparent; border: none; font-size: 0; line-height: 0; cursor: pointer; padding: 4px 6px; }
+  .del::before { content: ''; display: inline-block; width: 26px; height: 26px; vertical-align: middle;
+    background: url(data:image/png;base64,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) center / contain no-repeat; }
+  .empty { color: var(--muted); text-align: center; padding: 18px 0; font-size: 14px; }
+  .hidden { display: none; }
+  .feed-summary { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+  .meta { font-size: 13px; }
+  .wx-main { font-size: 1.6rem; font-weight: 700; }
+  .wx-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .wx-days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; font-size: 13px; text-align: center; }
+  .wx-days > div { background: var(--bg); border-radius: 12px; padding: 8px 4px; }
+  .wx-advice { margin-top: 12px; font-size: 14px; }
+  .entry { position: relative; border: 1.5px solid #8a96a3 !important; border-radius: 12px !important;
+    padding: 12px 14px !important; margin: 10px 0 !important; background: var(--surface); }
+  .entry:last-child { margin-bottom: 4px !important; }
+  .entry .seq { position: absolute; top: -9px; left: -9px; width: 26px; height: 26px; border-radius: 50%;
+    background: #2e8b57; color: #ffffff; font-size: 12px; font-weight: 700; display: grid; place-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+  .entry { text-align: left; }
+  .entry > div:first-child { min-width: 0; flex: 1; }
+  .entry .main { font-size: 16px; font-weight: 600; line-height: 1.45; color: var(--text); margin-bottom: 4px; word-break: break-word; }
+  .entry .meta { font-size: 15px !important; font-weight: 500 !important; line-height: 1.6 !important; color: #111111 !important; opacity: 1 !important; word-break: break-word; }
+  .entry .meta b { font-weight: 700; }
+  .entry .amt { font-size: 15px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hero">
+    
+    <div class="hero-row">
+      <div>
+        <h1>கோழி பண்ணை</h1>
+        <div class="date" id="today"></div>
+      </div>
+      <button class="pdf-btn" id="pdfBtn">📄 PDF அறிக்கை</button>
+    </div>
+    <div class="big" id="heroBirds" style="cursor:pointer"><span id="totalBirds">0</span> <small>கோழிகள் உள்ளது</small></div>
+    <div class="saving" id="saveState"></div>
+  </div>
+
+  <div id="alerts" style="margin-top:14px"></div>
+
+  <div class="stats">
+    <div class="stat"><div class="icon">🥚</div><div class="label">இன்றைய முட்டைகள்</div><div class="value" id="todayEggs">0</div></div>
+    <div class="stat"><div class="icon">📈</div><div class="label">இந்த வார முட்டைகள்</div><div class="value" id="weekEggs">0</div><div class="meta" id="weekBreak" style="margin-top:4px"></div></div>
+    <div class="stat" id="feedCard"><div class="icon">🌾</div><div class="label">தீவன இருப்பு</div><div class="value" id="feedStock">0 கிலோ</div></div>
+    <div class="stat"><div class="icon">📉</div><div class="label">மொத்த இழப்பு</div><div class="value" id="totalLoss">0</div>
+    <select id="lossRange" style="margin-top:8px;font-size:13px;padding:6px;width:100%">
+      <option value="7">1 வாரம்</option>
+      <option value="30">1 மாதம்</option>
+      <option value="90">3 மாதம்</option>
+      <option value="180">6 மாதம்</option>
+      <option value="365">1 வருடம்</option>
+      <option value="day">தேதி</option>
+    </select>
+    <input id="lossDayPick" class="hidden" type="date" style="margin-top:6px;font-size:13px;padding:6px;width:100%">
+    <div id="lossDayResult" class="meta" style="margin-top:4px"></div>
+  </div>
+    <div class="stat wide">
+      <div><div class="label">மொத்த லாபம் / நஷ்டம்</div><div class="value" id="profit">₹0</div></div>
+      <div style="font-size:28px">💰</div>
+    </div>
+  </div>
+
+  <div class="card" id="upcomingCard">
+    <h2>🔔 வரவிருக்கும் நினைவூட்டல்கள்</h2>
+    <div id="upcomingList"></div>
+  </div>
+
+  <div class="card">
+    <h2>📊 முட்டை உற்பத்தி</h2>
+    <div class="row" style="margin-bottom:6px">
+      <div><label>காலம்</label>
+        <select id="chartRange">
+          <option value="7">1 வாரம்</option>
+          <option value="30">1 மாதம்</option>
+          <option value="90">3 மாதம்</option>
+          <option value="180">6 மாதம்</option>
+          <option value="365">1 வருடம்</option>
+        </select>
+      </div>
+      <div><label>தேதி (அன்றைய உற்பத்தி)</label><input id="chartDate" type="date"></div>
+    </div>
+    <div id="chartSummary" class="meta" style="margin-bottom:6px"></div>
+    <div class="chart" id="chart" style="overflow-x:auto"></div>
+    <div id="dayResult" class="meta" style="margin-top:8px"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="birds">கோழிகள்</button>
+    <button class="tab" data-tab="eggs">முட்டை</button>
+    <button class="tab" data-tab="feed">தீவனம்</button>
+    <button class="tab" data-tab="accounts">கணக்கு</button>
+    <button class="tab" data-tab="alerts">நினைவூட்டல்</button>
+    <button class="tab" data-tab="disease">நோய்</button>
+    <button class="tab" data-tab="history">வரலாறு</button>
+  </div>
+
+  <section id="tab-birds">
+    <div class="card">
+      <h2><img alt="" src="data:image/jpeg;base64,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spDcgoJLadrpBIvb/uMQzMBp1hEVqVLLZUR4anb/AK73t2vg6PT/APyCC+G5MdDhebsXELQoixsQd778/wCMNcCyBmSN6pMhZTBVmi6ZKYSioTYDsZTzmhbzqRpNuNzza9/54r2NlmnUbMCZ8aeak2p5K/LuJ38Q8LKyTte+3Y4eotLlxnSqO68yBcHUpK0qB51C2/3474wdobT5WrwWCCblKAUi467cG2Cs9syFBB3ovZBRBWZ68aWs70mvzKVFgZbSzFpDLB1xYrwu567myr7jck998ZZBy0jK7bdSmSX4kiWytS4PjWaJXYAL3tcEEja+47by0nK7igFsvpZTe60pTcn73v8A9xjKqZTTLcEgvRngFhwBwEoCwNlbHm+9vfBlvv8AZ9lPnFcJtkEyvoVtg1eoBlIhQibvCOplR16SVablfIHUci3vg+tRYxrrMiIthTsRCmkrbdsTyFXHBtYnr821sBs0es6JAXU9PitBsNRkeGgAW3ud721WPS+NP7tJjlDkZalBsAIWp1VthbewJJ3677nCKbclHBw52n6o7qElJbRhJ7hihm/hnRna1IqjchT86qFTviqUVJSon8IPB5sd+tsSsOgQclwmIMUvv6VLddfWuzibqslJSDa1gduPvgRun1Np1pMyfdhB1JQ24okntvzb+XbBy5DzLz0iUGgsgjxlpHp3uBfn7e2O3g84wphZxiPKlLlhsthKcV//2Q==" style="width:64px;height:auto;border-radius:8px;flex-shrink:0"> புதிய கோழி வரவு</h2>
+      <form id="birdForm">
+        <div class="row">
+          <div><label>இனம்</label>
+            <select id="breed">
+              <option>நாட்டுக்கோழி</option>
+              <option>நாட்டு கலப்பின கோழி</option>
+              <option>கலப்பின முட்டைக்கோழி</option>
+              <option>இடைவெட்டு பெருவிடை</option>
+              <option>இளம் கோழி குஞ்சு</option>
+            </select>
+          </div>
+          <div><label>எண்ணிக்கை</label><input id="birdCount" type="number" min="1" required></div>
+        </div>
+        <label>Batch code</label>
+        <input id="batch" placeholder="எ.கா. B-2026-01" required>
+        <label>வயது</label>
+        <input id="birdAge" placeholder="எ.கா. 1 மாதம், 3 வாரம்">
+        <label>வாங்கிய தேதி</label>
+        <input id="birdDate" type="date" required>
+        <button class="primary" type="submit">சேர்</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>📉 இழப்பு பதிவு</h2>
+      <form id="lossForm">
+        <label>வயது வகை</label>
+        <select id="lossAge">
+          <option>இளம் குஞ்சு</option>
+          <option>ஒரு மாத குஞ்சு</option>
+          <option>இரண்டு மாத குஞ்சு</option>
+          <option>மூன்று மாத குஞ்சு</option>
+          <option>ஐந்து மாத கோழி</option>
+          <option>ஆறு மாத கோழி</option>
+          <option>பெரிய கோழி</option>
+        </select>
+        <label>இறப்பிற்கான காரணம்</label>
+        <select id="lossReason">
+          <option>நோய்</option>
+          <option>நரி / பூனை / நாய் தாக்குதல்</option>
+          <option>பாம்பு / விஷம்</option>
+          <option>அதிக வெப்பம்</option>
+          <option>குளிர் / மழை</option>
+          <option>ஊட்டச்சத்து குறைவு</option>
+          <option>விபத்து / காயம்</option>
+          <option>பிறப்பு குறைபாடு</option>
+          <option>காரணம் தெரியவில்லை</option>
+          <option>இதர</option>
+        </select>
+        <label>Batch code</label>
+        <select id="lossBatch"></select>
+        <div class="row">
+          <div><label>இறந்த எண்ணிக்கை</label><input id="lossCount" type="number" min="1" required></div>
+          <div><label>தேதி</label><input id="lossDate" type="date" required></div>
+        </div>
+        <button class="primary" type="submit" style="background:var(--danger)">பதிவு செய்</button>
+      </form>
+      <div id="lossList" style="margin-top:12px"></div>
+    </div>
+    <div class="card"><h2><img alt="" src="data:image/jpeg;base64,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spDcgoJLadrpBIvb/uMQzMBp1hEVqVLLZUR4anb/AK73t2vg6PT/APyCC+G5MdDhebsXELQoixsQd778/wCMNcCyBmSN6pMhZTBVmi6ZKYSioTYDsZTzmhbzqRpNuNzza9/54r2NlmnUbMCZ8aeak2p5K/LuJ38Q8LKyTte+3Y4eotLlxnSqO68yBcHUpK0qB51C2/3474wdobT5WrwWCCblKAUi467cG2Cs9syFBB3ovZBRBWZ68aWs70mvzKVFgZbSzFpDLB1xYrwu567myr7jck998ZZBy0jK7bdSmSX4kiWytS4PjWaJXYAL3tcEEja+47by0nK7igFsvpZTe60pTcn73v8A9xjKqZTTLcEgvRngFhwBwEoCwNlbHm+9vfBlvv8AZ9lPnFcJtkEyvoVtg1eoBlIhQibvCOplR16SVablfIHUci3vg+tRYxrrMiIthTsRCmkrbdsTyFXHBtYnr821sBs0es6JAXU9PitBsNRkeGgAW3ud721WPS+NP7tJjlDkZalBsAIWp1VthbewJJ3677nCKbclHBw52n6o7qElJbRhJ7hihm/hnRna1IqjchT86qFTviqUVJSon8IPB5sd+tsSsOgQclwmIMUvv6VLddfWuzibqslJSDa1gduPvgRun1Np1pMyfdhB1JQ24okntvzb+XbBy5DzLz0iUGgsgjxlpHp3uBfn7e2O3g84wphZxiPKlLlhsthKcV//2Q==" style="width:64px;height:auto;border-radius:8px;flex-shrink:0"> கோழி பதிவு</h2><div id="birdList"></div></div>
+  </section>
+
+  <section id="tab-eggs" class="hidden">
+    <div class="card">
+      <h2>🥚 பண்ணை முட்டை உற்பத்தி</h2>
+      <form id="eggForm">
+        <div class="row">
+          <div><label>தேதி</label><input id="eggDate" type="date" required></div>
+          <div><label>முட்டை எண்ணிக்கை</label><input id="eggCount" type="number" min="0" required></div>
+        </div>
+        <label>உடைந்த முட்டை</label>
+        <input id="eggBroken" type="number" min="0" placeholder="0">
+        <button class="primary" type="submit">பதிவு செய்</button>
+      </form>
+    </div>
+    <div class="card"><h2>சமீபத்திய உற்பத்திப் பதிவுகள்</h2><div id="eggList"></div></div>
+
+    <div class="card">
+      <h2>🐣 பொறிப்பு திறன் முட்டை</h2>
+      <form id="hatchForm">
+        <label>அடை வகை</label>
+        <select id="hatchType">
+          <option value="hatch">Hatchery</option>
+          <option value="hen">தாய்கோழி அடை</option>
+        </select>
+        <div id="hatchBox">
+          <label>Hatchery பெயர்</label>
+          <input id="hatchName" placeholder="எ.கா. ABC Hatchery, சென்னை">
+          <div class="row">
+            <div><label>முட்டை எண்ணிக்கை</label><input id="hatchCount" type="number" min="1"></div>
+            <div><label>கொடுத்த தேதி</label><input id="hatchSent" type="date"></div>
+          </div>
+          <label>வாங்கும் தேதி (கொடுத்த நாள் + 21 நாள்)</label>
+          <input id="hatchCollect" type="date" readonly>
+        </div>
+        <div id="henBox" class="hidden">
+          <label>கோழி அடையாளம்</label>
+          <input id="henName" placeholder="எ.கா. கோழி 3 (கருப்பு)">
+          <div class="row">
+            <div><label>முட்டை எண்ணிக்கை</label><input id="henCount" type="number" min="1"></div>
+            <div><label>வைத்த தேதி</label><input id="henSet" type="date"></div>
+          </div>
+          <label>பொறிக்கும் தேதி (வைத்த நாள் + 21 நாள்)</label>
+          <input id="henHatch" type="date" readonly>
+        </div>
+        <button class="primary" type="submit">பதிவு செய்</button>
+      </form>
+    </div>
+    <div class="card"><h2>Hatchery பதிவுகள்</h2><div id="hatchList"></div></div>
+  </section>
+  <section id="tab-feed" class="hidden">
+    <div class="card">
+      <h2>🌾 தீவன இருப்பு (பொருள் வாரியாக)</h2>
+      <div class="feed-summary" id="feedSummary"></div>
+      <div id="feedStockList" style="margin-top:8px"></div>
+      <label>குறைந்த இருப்பு எச்சரிக்கை (கிலோ)</label>
+      <div class="row">
+        <input id="feedMin" type="number" min="0" step="1">
+        <button class="primary" id="saveMin" type="button" style="margin-top:0;width:auto;padding:0 16px">சேமி</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📦 தீவனம் வாங்கியது</h2>
+      <form id="feedForm">
+        <div class="row">
+          <div><label>தீவன வகை</label><select id="feedItem"></select></div>
+          <div><label>கிலோ</label><input id="feedKg" type="number" min="0.1" step="0.1" required></div>
+        </div>
+        <div class="row">
+          <div><label>மொத்த விலை (₹)</label><input id="feedAmt" type="number" min="0" step="0.01"></div>
+          <div><label>தேதி</label><input id="feedDate" type="date" required></div>
+        </div>
+        <button class="primary" type="submit">சேர்</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>🍚 தீவனம் பயன்படுத்தியது</h2>
+      <form id="useForm">
+        <div class="row">
+          <div><label>தீவன வகை</label><select id="useItem"></select></div>
+          <div><label>கிலோ</label><input id="useKg" type="number" min="0.1" step="0.1" required></div>
+        </div>
+        <label>தேதி</label>
+        <input id="useDate" type="date" required>
+        <button class="primary" type="submit">சேர்</button>
+      </form>
+    </div>
+
+    <div class="card"><h2>தீவன பதிவுகள்</h2><div id="feedList"></div></div>
+  </section>
+  <section id="tab-accounts" class="hidden">
+    <div class="card">
+      <h2>💸 வரவு / செலவு</h2>
+      <form id="accForm">
+        <div class="row">
+          <div>
+            <label>வகை</label>
+            <select id="accType">
+              <option value="in">வரவு</option>
+              <option value="out">செலவு</option>
+            </select>
+          </div>
+          <div><label>தொகை (₹)</label><input id="accAmount" type="number" min="0" step="0.01" required></div>
+        </div>
+        <label>பிரிவு</label>
+        <select id="accCategory"></select>
+        <div id="accOtherWrap" class="hidden">
+          <label>இதர செலவின் பெயர்</label>
+          <input id="accOther" placeholder="எ.கா. மின்சாரம், வாகனம், கூலி">
+        </div>
+        <div id="accEggWrap" class="hidden">
+          <label>விற்ற முட்டை எண்ணிக்கை</label>
+          <input id="accEggs" type="number" min="0" step="1" placeholder="எ.கா. 300">
+        </div>
+        <div id="accNoteWrap">
+          <label>விவரம் (விருப்பம்)</label>
+          <input id="accNote" placeholder="விவரம் எழுதவும்">
+        </div>
+        <div id="accFeedWrap" class="hidden">
+          <label>தீவன வகை</label>
+          <select id="accFeedItem"></select>
+          <div id="accFeedStock" class="meta" style="margin-top:6px"></div>
+          <label>எத்தனை கிலோ</label>
+          <input id="accFeedKg" type="number" min="0.1" step="0.1" placeholder="எ.கா. 50">
+        </div>
+        <div id="accBatchWrap">
+          <label>Batch code</label>
+          <select id="accBatch"></select>
+        </div>
+        <label>தேதி</label>
+        <input id="accDate" type="date" required>
+        <button class="primary" type="submit">சேர்</button>
+      </form>
+    </div>
+    <div class="card"><h2>கணக்குப் பதிவுகள்</h2><div id="accList"></div></div>
+  </section>
+
+  <section id="tab-alerts" class="hidden">
+    <div class="card">
+      <h2>🔔 தடுப்பூசி / நினைவூட்டல்</h2>
+      <form id="alertForm">
+        <label>நினைவூட்டல்</label>
+        <input id="alertText" placeholder="எ.கா. ராணிகெட் தடுப்பூசி" required>
+        <label>தேதி</label>
+        <input id="alertDate" type="date" required>
+        <button class="primary" type="submit">சேர்</button>
+      </form>
+    </div>
+    <div class="card"><h2>வரவிருக்கும் நினைவூட்டல்கள்</h2><div id="alertList"></div></div>
+
+    <div class="card">
+      <h2>💑 இணை சேர்க்கை (சேவல் & பெட்டை)</h2>
+      <form id="pairForm">
+        <label>இணையின் பெயர்</label>
+        <input id="pairName" placeholder="எ.கா. இணை 1 – அசில்" required>
+        <label>இணை சேர்க்கும் தேதி</label>
+        <input id="pairDate" type="date" required>
+        <div class="row">
+          <div>
+            <label>சேவல் புகைப்படம்</label>
+            <input id="roosterFile" type="file" accept="image/*">
+            <img id="roosterPrev" style="width:100%;border-radius:12px;margin-top:6px;display:none">
+          </div>
+          <div>
+            <label>பெட்டை புகைப்படம்</label>
+            <input id="henFile" type="file" accept="image/*">
+            <img id="henPrev" style="width:100%;border-radius:12px;margin-top:6px;display:none">
+          </div>
+        </div>
+        <button class="primary" type="submit">சேர்</button>
+      </form>
+    </div>
+    <div class="card"><h2>இணை பதிவுகள்</h2><div id="pairList"></div></div>
+  </section>
+  <section id="tab-history" class="hidden">
+    <div class="card">
+      <h2>💾 காப்புப் பிரதி</h2>
+      <div class="meta" id="backupInfo" style="margin-bottom:10px"></div>
+      <button class="primary" id="backupAutoRestore" type="button" style="margin-top:0;background:var(--muted)">data recovery</button>
+      <button class="primary" id="backupDownload" type="button" style="margin-top:0;background:#2e8b57">காப்புப் பிரதி பதிவிறக்கு</button>
+      <label class="primary" style="margin-top:8px;background:var(--muted);text-align:center;cursor:pointer;display:block;padding:13px;border-radius:12px">
+        கோப்பிலிருந்து மீட்டெடு
+        <input id="backupFile" type="file" accept="application/json,.json" style="display:none">
+      </label>
+      <div id="backupStatus" class="meta" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>🕘 வரலாறு (அழித்த தகவல்கள்)</h2>
+      <button class="primary" id="clearHistory" type="button" style="background:var(--danger);margin-top:0">அனைத்தையும் அழி</button>
+      <div id="historyList" style="margin-top:10px"></div>
+    </div>
+  </section>
+  <section id="tab-disease" class="hidden">
+    <div class="card">
+      <h2>🦠 கோழி நோய்கள்</h2>
+      <input id="dsSearch" placeholder="நோய் அல்லது அறிகுறி தேடுங்கள்..." autocomplete="off">
+      <div id="diseaseList" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>💉 தடுப்பூசி அட்டவணை</h2>
+      <div id="vaccineList"></div>
+    </div>
+  </section>
+</div>
+
+<div id="confirmBox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:999;padding:20px">
+  <div style="background:var(--surface);color:var(--text);border-radius:16px;padding:20px;max-width:340px;width:100%;box-shadow:var(--shadow)">
+    <div style="font-size:1.05rem;font-weight:700;margin-bottom:6px">இதை நீக்கலாமா?</div>
+    <div class="meta" style="margin-bottom:14px">நீக்கிய பிறகு திரும்பப் பெற முடியாது.</div>
+    <div class="row">
+      <button id="confirmNo" class="primary" type="button" style="margin-top:0;background:var(--muted)">இல்லை</button>
+      <button id="confirmYes" class="primary" type="button" style="margin-top:0;background:var(--danger)">ஆம்</button>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  const DEFAULTS = { birds: [], eggs: [], accounts: [], alerts: [], losses: [], feed: [], pairs: [], history: [], feedMin: 50, nextId: 1 };
+  const state = JSON.parse(JSON.stringify(DEFAULTS));
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const $ = id => document.getElementById(id);
+  const uid = () => state.nextId++;
+
+  function daysAgo(n) {
+    const d = new Date(); d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  }
+  const eggsOn = day => state.eggs.filter(e => !e.hatchery && e.date === day).reduce((s, e) => s + Number(e.count), 0);
+  const losses = () => state.losses.reduce((s, l) => s + Number(l.count), 0);
+  const totalBirdsNow = () => state.birds.reduce((s, b) => s + Number(b.count), 0) - losses();
+  const feedStock = () => state.feed.reduce((s, f) => s + (f.type === 'in' ? Number(f.kg) : -Number(f.kg)), 0);
+  const itemStock = item => state.feed.reduce((s, f) =>
+    (f.item || 'தீவனம்') === item ? s + (f.type === 'in' ? Number(f.kg) : -Number(f.kg)) : s, 0);
+  const feedCost = () => state.feed.reduce((s, f) => s + Number(f.amt || 0), 0);
+  const feedCostBy = () => {
+    const m = {};
+    state.feed.forEach(f => { if (f.type === 'in') m[f.item || 'தீவனம்'] = (m[f.item || 'தீவனம்'] || 0) + Number(f.amt || 0); });
+    return m;
+  };
+  const profitTotal = () => state.accounts.reduce((s, a) => s + (a.type === 'in' ? Number(a.amount) : -Number(a.amount)), 0) - feedCost();
+
+  // ---------- Storage (per-user, persistent) ----------
+  const KEY = 'kozhi_app_state_v1';
+  let ready = false, applying = false, saveTimer = null;
+  function persist() {
+    if (!ready || applying) return;
+    $('saveState').textContent = 'சேமிக்கிறது...';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(state));
+        autoBackup();
+        $('saveState').textContent = '✓ சேமிக்கப்பட்டது';
+      } catch (err) {
+        console.error(err); $('saveState').textContent = 'சேமிப்பில் பிழை';
+      }
+    }, 300);
+  }
+
+  // ---------- Rendering ----------
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function entry(ico, main, meta, amt, amtClass, onDelete) {
+    const row = document.createElement('div');
+    row.className = 'entry';
+    row.innerHTML = `<div style="display:flex;gap:10px;align-items:center;min-width:0">
+        <div class="ico">${ico}</div>
+        <div style="min-width:0"><div class="main"></div><div class="meta"></div></div>
+      </div>`;
+    row.querySelector('.main').textContent = main;
+    row.querySelector('.meta').textContent = meta;
+    if (amt !== null) {
+      const a = document.createElement('div');
+      a.className = 'amt ' + (amtClass || ''); a.textContent = amt;
+      row.appendChild(a);
+    }
+    const d = document.createElement('button');
+    d.className = 'del'; d.textContent = '🗑️'; d.setAttribute('aria-label', 'நீக்கு');
+    d.addEventListener('click', () => askDelete(onDelete, main + (meta ? ' · ' + meta : '')));
+    row.appendChild(d);
+    return row;
+  }
+  const fill = (el, nodes, emptyText) => {
+    el.innerHTML = '';
+    if (!nodes.length) { el.innerHTML = `<div class="empty">${emptyText}</div>`; return; }
+    nodes.forEach((n, i) => {
+      if (n.classList && n.classList.contains('entry')) {
+        const badge = document.createElement('span');
+        badge.className = 'seq';
+        badge.textContent = i + 1;
+        n.prepend(badge);
+      }
+      el.appendChild(n);
+    });
+  };
+
+  function renderChart() {
+    const chart = $('chart');
+    chart.innerHTML = '';
+    const range = Number($('chartRange').value) || 7;
+    const days = [...Array(range)].map((_, k) => daysAgo(range - 1 - k));
+    const vals = days.map(eggsOn);
+    const total = vals.reduce((a, b) => a + b, 0);
+    $('chartSummary').textContent = 'மொத்தம்: ' + total + ' முட்டைகள் · நாள் சராசரி: ' + (total / range).toFixed(1);
+
+    let buckets;
+    if (range <= 14) {
+      buckets = days.map((d, k) => ({ label: d === todayStr ? 'இன்று' : d.slice(8, 10) + '/' + d.slice(5, 7), val: vals[k] }));
+    } else {
+      buckets = [];
+      for (let k = 0; k < days.length; k += 7) {
+        const part = vals.slice(k, k + 7);
+        buckets.push({ label: days[k].slice(8, 10) + '/' + days[k].slice(5, 7), val: part.reduce((a, b) => a + b, 0) });
+      }
+    }
+    const max = Math.max(1, ...buckets.map(b => b.val));
+    buckets.forEach(b => {
+      const wrap = document.createElement('div');
+      wrap.className = 'bar-wrap';
+      if (range > 14) wrap.style.minWidth = '30px';
+      const v = document.createElement('div'); v.className = 'bar-val'; v.textContent = b.val;
+      const bar = document.createElement('div'); bar.className = 'bar';
+      bar.style.height = (b.val / max * 100) + '%';
+      const lbl = document.createElement('div'); lbl.className = 'bar-day'; lbl.textContent = b.label;
+      wrap.append(v, bar, lbl);
+      chart.appendChild(wrap);
+    });
+
+    const picked = $('chartDate').value;
+    $('dayResult').textContent = picked ? picked + ' அன்றைய உற்பத்தி: ' + eggsOn(picked) + ' முட்டைகள்' : '';
+  }
+  $('chartRange').addEventListener('change', renderChart);
+  $('chartDate').addEventListener('change', renderChart);
+
+  function renderAlerts() {
+    const box = $('alerts'); box.innerHTML = '';
+    const stock = feedStock();
+    if (state.feedMin > 0 && stock <= state.feedMin) {
+      const d = document.createElement('div');
+      d.className = 'alert danger';
+      d.textContent = `🌾 தீவனம் குறைவு! மீதம் ${stock.toFixed(1)} கிலோ (எச்சரிக்கை அளவு ${state.feedMin} கிலோ)`;
+      box.appendChild(d);
+    }
+    const lastFile = localStorage.getItem('kozhi_last_file_backup');
+    if (!lastFile || (Date.now() - new Date(lastFile).getTime()) > 7 * 86400000) {
+      const r = el('div', 'alert danger', '💾 காப்புப் பிரதி கோப்பு பதிவிறக்க வேண்டிய நேரம். வரலாறு tab > காப்புப் பிரதி > பதிவிறக்கு.');
+      box.appendChild(r);
+    }
+    state.eggs.filter(e => e.kind === 'hen' && e.hatch).forEach(e => {
+      const days = Math.round((new Date(e.hatch) - new Date(todayStr)) / 86400000);
+      if (days > 3) return;
+      const d = document.createElement('div');
+      d.className = 'alert danger';
+      d.textContent = days <= 0
+        ? '🐣 இன்று பொறிப்பு நாள்: ' + e.hatchery.replace('தாய்கோழி அடை · ', '') + ' (' + e.count + ' முட்டைகள்)'
+        : '🐣 பொறிப்பு நெருங்குகிறது (' + days + ' நாள்): ' + e.hatchery.replace('தாய்கோழி அடை · ', '');
+      box.appendChild(d);
+    });
+    state.alerts.filter(al => al.date <= todayStr).forEach(al => {
+      const d = document.createElement('div'); d.className = 'alert';
+      d.textContent = '💉 இன்று / தாமதம்: ' + al.text; box.appendChild(d);
+    });
+  }
+
+  function renderAll() {
+    persist();
+
+
+
+    const batches = [...new Set(state.birds.map(b => b.batch).filter(Boolean))];
+    ['lossBatch', 'accBatch'].forEach(id => {
+      const sel = $(id); const prev = sel.value;
+      sel.innerHTML = id === 'accBatch' ? '<option value="">பொது</option>' : '';
+      batches.forEach(x => { const o = document.createElement('option'); o.value = x; o.textContent = x; sel.appendChild(o); });
+      if (prev) sel.value = prev;
+    });
+
+    fill($('birdList'), state.birds.map(b => entry('🐔', `${b.breed} — ${b.count} கோழிகள்`,
+      `${b.age ? 'வயது ' + b.age + ' · ' : ''}Batch ${b.batch || '-'} · வாங்கிய தேதி ${b.date}`, null, '',
+      () => { state.birds = state.birds.filter(x => x.id !== b.id); renderAll(); })), 'கோழி பதிவு இல்லை');
+
+    fill($('lossList'), [...state.losses].sort((a, b) => b.date.localeCompare(a.date)).map(l =>
+      entry('📉', `${l.age || 'இழப்பு'} — ${l.count}`,
+        (l.reason ? 'காரணம்: ' + l.reason + ' · ' : '') + `Batch ${l.batch || '-'} · ${l.date}`, null, '',
+        () => { state.losses = state.losses.filter(x => x.id !== l.id); renderAll(); })),
+      'இழப்பு பதிவுகள் இல்லை');
+
+    fill($('eggList'), [...state.eggs].filter(e => !e.hatchery)
+      .sort((a, b) => b.date.localeCompare(a.date)).slice(0, 15).map(e =>
+        entry('🥚', e.count + ' முட்டைகள்', e.date + (e.broken ? ' · உடைந்தவை: ' + e.broken : ''), null, '',
+          () => { state.eggs = state.eggs.filter(x => x.id !== e.id); renderAll(); })), 'பதிவுகள் இல்லை');
+
+    fill($('hatchList'), [...state.eggs].filter(e => e.hatchery)
+      .sort((a, b) => b.date.localeCompare(a.date)).map(e =>
+        entry('🐣', e.hatchery + ' · ' + e.count + ' முட்டைகள்',
+          (e.kind === 'hen' ? 'வைத்த தேதி: ' + e.sent + (e.hatch ? ' · பொறிக்கும் தேதி: ' + e.hatch + (e.hatch > todayStr ? ' (இன்னும் ' + Math.round((new Date(e.hatch) - new Date(todayStr)) / 86400000) + ' நாள்)' : ' (பொறிப்பு நாள்)') : '') : 'கொடுத்த தேதி: ' + e.sent + (e.collect ? ' · வாங்கும் தேதி: ' + e.collect : '')), null, '',
+          () => { state.eggs = state.eggs.filter(x => x.id !== e.id); renderAll(); })), 'Hatchery பதிவுகள் இல்லை');
+
+    const stock = feedStock();
+    const costs = feedCostBy();
+    const costText = Object.keys(costs).map(k => `${k} ₹${costs[k].toFixed(2)}`).join(' · ');
+    $('feedSummary').textContent = `மொத்த இருப்பு: ${stock.toFixed(1)} கிலோ · எச்சரிக்கை அளவு: ${state.feedMin} கிலோ` +
+      (costText ? ` · மொத்த தீவன செலவு ₹${feedCost().toFixed(2)} (${costText})` : '');
+    if (document.activeElement !== $('feedMin')) $('feedMin').value = state.feedMin;
+
+    const stockBox = $('feedStockList');
+    stockBox.innerHTML = '';
+    FEED_ITEMS.forEach(item => {
+      const q = itemStock(item);
+      const row = el('div', 'entry');
+      const left = el('div', '');
+      left.style.cssText = 'display:flex;gap:10px;align-items:center';
+      left.append(el('div', 'ico', '🌾'), el('div', 'main', item));
+      row.append(left, el('div', 'amt ' + (q <= 0 ? 'neg' : 'pos'), q.toFixed(1) + ' கிலோ'));
+      stockBox.appendChild(row);
+    });
+
+    fill($('feedList'), [...state.feed].sort((a, b) => b.date.localeCompare(a.date)).map(f => {
+      const isIn = f.type === 'in';
+      const title = (isIn ? 'வாங்கியது' : 'பயன்படுத்தியது') + ' · ' + (f.item || 'தீவனம்') + ' ' + f.kg + ' கிலோ';
+      const meta = f.date + (isIn && f.amt ? ' · ₹' + Number(f.amt).toFixed(2) : '');
+      return entry(isIn ? '📦' : '🍚', title, meta, (isIn ? '+' : '−') + f.kg + ' கி', isIn ? 'pos' : 'neg',
+        () => { state.feed = state.feed.filter(x => x.id !== f.id); renderAll(); });
+    }), 'தீவன பதிவுகள் இல்லை');
+
+    fill($('accList'), [...state.accounts].sort((a, b) => b.date.localeCompare(a.date)).map(a => {
+      const title = a.category ? (a.note ? a.category + ' — ' + a.note : a.category) : a.note;
+      return entry(a.type === 'in' ? '💰' : '🧾', title,
+        (a.batch ? 'Batch ' + a.batch + ' · ' : '') + a.date,
+        (a.type === 'in' ? '+' : '−') + '₹' + Number(a.amount).toFixed(2),
+        a.type === 'in' ? 'pos' : 'neg',
+        () => { state.accounts = state.accounts.filter(x => x.id !== a.id); renderAll(); });
+    }), 'பதிவுகள் இல்லை');
+
+    fill($('pairList'), [...state.pairs].sort((a, b) => b.date.localeCompare(a.date)).map(p => {
+      const w = el('div', 'entry');
+      w.style.cssText = 'display:block;padding:12px 0;border-bottom:1px solid var(--bg)';
+      const top = el('div', '');
+      top.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px';
+      top.append(el('div', 'main', p.name + ' · ' + p.date));
+      const del = el('button', 'del', '🗑️');
+      del.setAttribute('aria-label', 'நீக்கு');
+      del.addEventListener('click', () => askDelete(() => { state.pairs = state.pairs.filter(x => x.id !== p.id); renderAll(); }, p.name + ' · ' + p.date));
+      top.appendChild(del);
+      w.appendChild(top);
+      const row = el('div', '');
+      row.style.cssText = 'display:flex;gap:8px;margin-top:8px';
+      [['சேவல்', p.rooster], ['பெட்டை', p.hen]].forEach(([lbl, src]) => {
+        const box = el('div', '');
+        box.style.cssText = 'flex:1;text-align:center;font-size:13px;color:var(--muted)';
+        if (src) {
+          const im = document.createElement('img');
+          im.src = src;
+          im.style.cssText = 'width:100%;border-radius:12px;display:block';
+          box.appendChild(im);
+        } else {
+          box.appendChild(el('div', '', 'படம் இல்லை'));
+        }
+        box.appendChild(el('div', '', lbl));
+        row.appendChild(box);
+      });
+      w.appendChild(row);
+      return w;
+    }), 'இணை பதிவுகள் இல்லை');
+
+    fill($('alertList'), [...state.alerts].sort((a, b) => a.date.localeCompare(b.date)).map(al =>
+      entry('💉', al.text, al.date, null, '',
+        () => { state.alerts = state.alerts.filter(x => x.id !== al.id); renderAll(); })), 'நினைவூட்டல்கள் இல்லை');
+
+    const birds = totalBirdsNow();
+    const weekDays = [...Array(7)].map((_, i) => daysAgo(i));
+    const weekProd = weekDays.reduce((s, d) => s + eggsOn(d), 0);
+    const weekBroken = state.eggs.filter(e => !e.hatchery && weekDays.includes(e.date))
+      .reduce((s, e) => s + Number(e.broken || 0), 0);
+    const weekHatch = state.eggs.filter(e => e.hatchery && weekDays.includes(e.sent || e.date))
+      .reduce((s, e) => s + Number(e.count), 0);
+    const weekSold = state.accounts.filter(a => a.type === 'in' && a.category === 'முட்டை விற்பனை' && weekDays.includes(a.date))
+      .reduce((s, a) => s + Number(a.eggs || 0), 0);
+    const week = weekProd - weekBroken - weekHatch - weekSold;
+    const wb = $('weekBreak');
+    wb.innerHTML = '';
+    [['உற்பத்தி', weekProd, '#1f7a4d', '+'],
+     ['உடைந்தவை', weekBroken, '#c0392b', '−'],
+     ['Hatchery', weekHatch, '#b9770e', '−'],
+     ['விற்பனை', weekSold, '#1f5fa8', '−']].forEach(([name, val, color, sign]) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--muted)';
+      const a = document.createElement('span');
+      a.style.color = 'var(--text)';
+      a.textContent = name;
+      const b = document.createElement('b');
+      b.style.color = color;
+      b.textContent = sign + ' ' + val;
+      row.append(a, b);
+      wb.appendChild(row);
+    });
+    const profit = profitTotal();
+    $('totalBirds').textContent = birds;
+    $('todayEggs').textContent = eggsOn(todayStr);
+    $('weekEggs').textContent = week;
+    const lossMode = $('lossRange').value;
+    const lossDay = $('lossDayPick').value;
+    $('lossDayPick').classList.toggle('hidden', lossMode !== 'day');
+    if (lossMode === 'day') {
+      $('totalLoss').textContent = lossDay ? state.losses.filter(l => l.date === lossDay).reduce((s, l) => s + Number(l.count), 0) : 0;
+      $('lossDayResult').textContent = lossDay ? lossDay + ' அன்றைய இழப்பு' : 'தேதியை தேர்வு செய்யவும்';
+    } else {
+      const lossDays = [...Array(Number(lossMode))].map((_, k) => daysAgo(k));
+      $('totalLoss').textContent = state.losses.filter(l => lossDays.includes(l.date)).reduce((s, l) => s + Number(l.count), 0);
+      $('lossDayResult').textContent = '';
+    }
+    $('feedStock').textContent = stock.toFixed(1) + ' கிலோ';
+    $('feedCard').classList.toggle('low', state.feedMin > 0 && stock <= state.feedMin);
+    const pEl = $('profit');
+    pEl.textContent = (profit < 0 ? '-' : '') + '₹' + Math.abs(profit).toFixed(2);
+    pEl.className = 'value ' + (profit < 0 ? 'neg' : 'pos');
+
+    const histBox = $('historyList');
+    histBox.innerHTML = '';
+    if (!state.history.length) histBox.appendChild(el('div', 'empty', 'வரலாறு இல்லை'));
+    state.history.forEach((h, idx) => {
+      const row = el('div', 'entry');
+      const left = el('div', '');
+      left.style.cssText = 'min-width:0;flex:1';
+      left.append(el('div', 'main', (h.section ? h.section + ' · ' : '') + h.text), el('div', 'meta', h.when));
+      (h.details || []).forEach(d => {
+        if (String(d[1]).startsWith('data:')) {
+          left.appendChild(el('div', 'meta', d[0] + ':'));
+          const im = document.createElement('img');
+          im.src = d[1];
+          im.style.cssText = 'width:100%;max-width:200px;border-radius:12px;margin:4px 0;display:block';
+          left.appendChild(im);
+        } else {
+          left.appendChild(el('div', 'meta', d[0] + ': ' + d[1]));
+        }
+      });
+      const del = el('button', 'del', '🗑️');
+      del.setAttribute('aria-label', 'நீக்கு');
+      del.addEventListener('click', () => askDelete(() => {
+        state.history = state.history.filter(x => x.id !== h.id);
+        renderAll();
+      }));
+      row.append(left, del);
+      row.prepend(el('span', 'seq', String(idx + 1)));
+      histBox.appendChild(row);
+    });
+    $('clearHistory').onclick = () => askDelete(() => { state.history = []; renderAll(); });
+
+    const upcoming = [];
+    state.alerts.filter(a => a.date >= todayStr).forEach(a => upcoming.push({ date: a.date, text: a.text }));
+    state.eggs.filter(e => e.kind === 'hen' && e.hatch && e.hatch >= todayStr).forEach(e =>
+      upcoming.push({ date: e.hatch, text: '🐣 பொறிப்பு: ' + e.hatchery.replace('தாய்கோழி அடை · ', '') + ' (' + e.count + ' முட்டைகள்)' }));
+    upcoming.sort((x, y) => x.date.localeCompare(y.date));
+    const upBox = $('upcomingList');
+    upBox.innerHTML = '';
+    if (!upcoming.length) upBox.appendChild(el('div', 'empty', 'வரவிருக்கும் நினைவூட்டல்கள் இல்லை'));
+    upcoming.forEach(u => {
+      const days = Math.round((new Date(u.date) - new Date(todayStr)) / 86400000);
+      if (days <= 0) {
+        const hatchToday = u.text.startsWith('🐣');
+        const alertToday = el('div', 'alert danger', hatchToday
+          ? '🐣 இன்று பொறிப்பு நாள்: ' + u.text.replace('🐣 பொறிப்பு: ', '')
+          : '🔔 இன்று: ' + u.text);
+        upBox.appendChild(alertToday);
+        return;
+      }
+      const row = el('div', 'entry');
+      const left = el('div', '');
+      left.style.cssText = 'display:flex;gap:10px;align-items:center;min-width:0';
+      left.append(el('div', 'ico', '🔔'), el('div', 'main', u.text + ' · ' + u.date));
+      row.append(left, el('div', 'amt pos', days + ' நாள்'));
+      upBox.appendChild(row);
+    });
+    renderAlerts();
+    renderChart();
+  }
+
+  // ---------- PDF report ----------
+  function buildPdf() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const monthStart = todayStr.slice(0, 8) + '01';
+    const monthEggs = state.eggs.filter(e => !e.hatchery && e.date >= monthStart && e.date <= todayStr)
+      .reduce((s, e) => s + Number(e.count), 0);
+    const income = state.accounts.filter(a => a.type === 'in').reduce((s, a) => s + Number(a.amount), 0);
+    const expense = state.accounts.filter(a => a.type === 'out').reduce((s, a) => s + Number(a.amount), 0);
+
+    let y = 20;
+    doc.setFontSize(18); doc.text('Poultry Farm Report', 14, y); y += 8;
+    doc.setFontSize(10); doc.setTextColor(110);
+    doc.text('Generated: ' + todayStr, 14, y); y += 10;
+    doc.setTextColor(0);
+
+    doc.setFontSize(13); doc.text('Summary', 14, y); y += 7;
+    doc.setFontSize(11);
+    const rows = [
+      ['Birds alive', String(totalBirdsNow())],
+      ['Birds lost (total)', String(losses())],
+      ['Eggs this month', String(monthEggs)],
+      ['Feed in stock (kg)', feedStock().toFixed(1)],
+      ['Feed alert level (kg)', String(state.feedMin)],
+      ['Total income (Rs)', income.toFixed(2)],
+      ['Total expenses (Rs)', expense.toFixed(2)],
+      ['Net profit / loss (Rs)', profitTotal().toFixed(2)]
+    ];
+    rows.forEach(([k, v]) => { doc.text(k, 14, y); doc.text(v, 110, y, { align: 'right' }); y += 7; });
+
+    y += 5;
+    doc.setFontSize(13); doc.text('Recent transactions', 14, y); y += 7;
+    doc.setFontSize(10);
+    [...state.accounts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20).forEach(a => {
+      if (y > 280) { doc.addPage(); y = 20; }
+      const sign = a.type === 'in' ? '+' : '-';
+      doc.text(a.date, 14, y);
+      doc.text(String(a.note).slice(0, 50), 45, y);
+      doc.text(sign + Number(a.amount).toFixed(2), 190, y, { align: 'right' });
+      y += 6;
+    });
+    if (!state.accounts.length) doc.text('No transactions recorded.', 14, y);
+    return doc;
+  }
+
+  $('pdfBtn').addEventListener('click', async () => {
+    const btn = $('pdfBtn');
+    btn.disabled = true;
+    try {
+      if (!window.jspdf) throw new Error('PDF library not loaded');
+      const pdf = buildPdf();
+      const bytes = pdf.output('arraybuffer');
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const file = new File([blob], 'kozhi_report_' + todayStr + '.pdf', { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Poultry Report' });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = file.name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('PDF சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['birds', 'eggs', 'feed', 'accounts', 'alerts', 'disease', 'history'].forEach(t =>
+        $('tab-' + t).classList.toggle('hidden', t !== btn.dataset.tab));
+    });
+  });
+
+  // ---------- Forms ----------
+  $('today').textContent = 'இன்று ' + todayStr;
+  ['birdDate', 'eggDate', 'accDate', 'alertDate', 'lossDate', 'feedDate', 'useDate'].forEach(id => $(id).value = todayStr);
+  // Today and earlier dates only: no future (advance) dates in these records
+  ['eggDate', 'hatchSent', 'henSet', 'feedDate', 'useDate', 'accDate', 'birdDate', 'lossDate'].forEach(id => { $(id).max = todayStr; });
+
+  $('birdForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.birds.push({ id: uid(), breed: $('breed').value, batch: $('batch').value.trim(), age: $('birdAge').value.trim(),
+      count: Number($('birdCount').value), date: $('birdDate').value });
+    e.target.reset(); $('birdDate').value = todayStr; renderAll();
+  });
+  $('lossForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.losses.push({ id: uid(), age: $('lossAge').value, reason: $('lossReason').value,
+      batch: $('lossBatch').value, count: Number($('lossCount').value), date: $('lossDate').value });
+    e.target.reset(); $('lossDate').value = todayStr; renderAll();
+  });
+  $('eggForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.eggs.push({ id: uid(), count: Number($('eggCount').value), date: $('eggDate').value,
+      broken: Number($('eggBroken').value || 0) });
+    e.target.reset(); $('eggDate').value = todayStr; renderAll();
+  });
+
+  function addDays(iso, n) {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  $('henSet').addEventListener('change', () => { $('henHatch').value = addDays($('henSet').value, 21); });
+  $('hatchSent').addEventListener('change', () => { $('hatchCollect').value = addDays($('hatchSent').value, 21); });
+
+  function toggleHatch() {
+    const hen = $('hatchType').value === 'hen';
+    $('hatchBox').classList.toggle('hidden', hen);
+    $('henBox').classList.toggle('hidden', !hen);
+  }
+  $('hatchType').addEventListener('change', toggleHatch);
+  toggleHatch();
+
+  $('hatchForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if ($('hatchType').value === 'hen') {
+      const name = $('henName').value.trim(), count = Number($('henCount').value), set = $('henSet').value;
+      if (!name || !count || !set) { alert('கோழி அடையாளம், முட்டை எண்ணிக்கை, வைத்த தேதி ஆகியவற்றை நிரப்பவும்.'); return; }
+      state.eggs.push({ id: uid(), kind: 'hen', hatchery: 'தாய்கோழி அடை · ' + name, count: count,
+        date: set, sent: set, hatch: addDays(set, 21) });
+    } else {
+      const name = $('hatchName').value.trim(), count = Number($('hatchCount').value), sent = $('hatchSent').value;
+      if (!name || !count || !sent) { alert('Hatchery பெயர், முட்டை எண்ணிக்கை, கொடுத்த தேதி ஆகியவற்றை நிரப்பவும்.'); return; }
+      state.eggs.push({ id: uid(), kind: 'hatch', hatchery: name, count: count,
+        date: sent, sent: sent, collect: addDays(sent, 21) });
+    }
+    e.target.reset(); toggleHatch(); renderAll();
+  });
+  // Photos are shrunk before saving so they fit comfortably on the phone
+  function readPhoto(file) {
+    if (!file) return Promise.resolve('');
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const k = Math.min(1, 480 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k);
+        c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('photo')); };
+      img.src = url;
+    });
+  }
+  let pendingRooster = '', pendingHen = '';
+  $('roosterFile').addEventListener('change', async e => {
+    pendingRooster = await readPhoto(e.target.files[0]).catch(() => '');
+    $('roosterPrev').src = pendingRooster;
+    $('roosterPrev').style.display = pendingRooster ? 'block' : 'none';
+  });
+  $('henFile').addEventListener('change', async e => {
+    pendingHen = await readPhoto(e.target.files[0]).catch(() => '');
+    $('henPrev').src = pendingHen;
+    $('henPrev').style.display = pendingHen ? 'block' : 'none';
+  });
+  $('pairForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.pairs.push({ id: uid(), name: $('pairName').value.trim(), date: $('pairDate').value,
+      rooster: pendingRooster, hen: pendingHen });
+    pendingRooster = ''; pendingHen = '';
+    e.target.reset();
+    $('roosterPrev').style.display = 'none'; $('henPrev').style.display = 'none';
+    renderAll();
+  });
+
+  $('lossRange').addEventListener('change', renderAll);
+  $('lossDayPick').addEventListener('change', renderAll);
+
+  // Safety check on every form: a future date is refused before anything is saved
+  document.addEventListener('submit', e => {
+    const bad = [...e.target.querySelectorAll('input[type="date"][max]')]
+      .find(i => i.value && i.value > i.max);
+    if (bad) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      alert('எதிர்கால தேதி அனுமதிக்கப்படாது. இன்று அல்லது முந்தைய தேதியைத் தேர்வு செய்யவும்.');
+    }
+  }, true);
+
+  // Tapping the bird count opens the கோழி பதிவு list
+  $('heroBirds').addEventListener('click', () => {
+    document.querySelector('.tab[data-tab="birds"]').click();
+    $('birdList').closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // ---------- Backup ----------
+  // Every change is also kept as an automatic backup on this phone (a second copy of the data)
+  const BACKUP_KEY = 'kozhi_app_backup_v1';
+  const UNDO_KEY = 'kozhi_undo_before_delete_v1';
+  // Only ONE automatic backup is kept: each save replaces the previous one, so phone storage does not grow
+  let lastBackupText = '';
+  function autoBackup() {
+    const data = JSON.stringify(state);
+    if (data === lastBackupText) return;
+    try {
+      localStorage.setItem(BACKUP_KEY, JSON.stringify({ savedAt: new Date().toISOString(), state: state }));
+      lastBackupText = data;
+      showBackupInfo();
+    } catch (err) {
+      backupStatus('போனில் இடம் குறைவாக உள்ளது. பழைய வரலாற்றை அழிக்கவும்.');
+    }
+    // Installed app: also save the same backup into the phone's Downloads folder (one file, replaced each time)
+    const cap = window.Capacitor;
+    if (cap && cap.isNativePlatform && cap.isNativePlatform()) {
+      const file = JSON.stringify({ savedAt: new Date().toISOString(), state: state });
+      if (cap.Plugins.DownloadsWriter) cap.Plugins.DownloadsWriter.save({ name: 'kozhi_pannai_backup.json', data: file }).catch(() => {});
+    }
+  }
+  function backupStatus(msg) { $('backupStatus').textContent = msg; }
+  function showBackupInfo() {
+    const raw = localStorage.getItem(BACKUP_KEY);
+    if (!raw) { $('backupInfo').textContent = 'தானியங்கி காப்பு இன்னும் எடுக்கப்படவில்லை.'; return; }
+    const d = new Date(JSON.parse(raw).savedAt);
+    $('backupInfo').textContent = 'கடைசி தானியங்கி காப்பு: ' + d.toLocaleString('ta-IN');
+  }
+  function applyState(data) {
+    Object.assign(state, DEFAULTS, data);
+    renderAll();
+  }
+
+
+  $('backupDownload').addEventListener('click', async () => {
+    const body = JSON.stringify({ exportedAt: new Date().toISOString(), state: state }, null, 1);
+    const fileName = 'kozhi_pannai_backup_' + todayStr + '.json';
+    const cap = window.Capacitor;
+    if (cap && cap.isNativePlatform && cap.isNativePlatform()) {
+      try {
+        const { Filesystem, Share } = cap.Plugins;
+        const saved = await Filesystem.writeFile({ path: fileName, data: body, directory: 'DOCUMENTS', encoding: 'utf8', recursive: true });
+        backupStatus('✓ காப்பு உருவாக்கப்பட்டது. Share திரையில் Files-ஐ தேர்வு செய்து Downloads-இல் சேமிக்கவும்.');
+        try {
+          await Share.share({ title: 'காப்புப் பிரதி', text: fileName, files: [saved.uri], dialogTitle: 'Files-இல் சேமிக்கவும்' });
+        } catch (shareErr) { /* share sheet closed: the file is already created */ }
+      } catch (err) {
+        backupStatus('சேமிப்பில் பிழை: ' + (err && err.message ? err.message : err));
+      }
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([body], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    backupStatus('✓ கோப்பு பதிவிறக்கப்பட்டது.');
+  });
+
+  $('backupFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data.state) throw new Error('bad');
+        applyState(data.state);
+        backupStatus('✓ கோப்பிலிருந்து மீட்டெடுக்கப்பட்டது.');
+      } catch (err) {
+        backupStatus('இந்த கோப்பு சரியான காப்புப் பிரதி இல்லை.');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  $('backupAutoRestore').addEventListener('click', () => {
+    const undo = localStorage.getItem(UNDO_KEY);
+    if (undo) {
+      applyState(JSON.parse(undo).state);
+      localStorage.removeItem(UNDO_KEY);
+      backupStatus('✓ நீக்குவதற்கு முன் இருந்த நிலைக்குத் திரும்பியது.');
+      return;
+    }
+    const raw = localStorage.getItem(BACKUP_KEY);
+    if (!raw) { backupStatus('மீட்க எதுவும் இல்லை.'); return; }
+    applyState(JSON.parse(raw).state);
+    backupStatus('✓ கடைசி காப்பிலிருந்து மீட்டெடுக்கப்பட்டது.');
+  });
+
+
+  let pendingDelete = null;
+  function askDelete(fn, label) {
+    pendingDelete = { fn: fn, label: label };
+    $('confirmBox').style.display = 'flex';
+  }
+  $('confirmNo').addEventListener('click', () => {
+    pendingDelete = null;
+    $('confirmBox').style.display = 'none';
+  });
+  const HIST_KEYS = ['birds', 'eggs', 'accounts', 'alerts', 'losses', 'feed', 'pairs'];
+  const HIST_SECTION = { birds: 'கோழி வரவு', eggs: 'முட்டை', accounts: 'கணக்கு', alerts: 'நினைவூட்டல்',
+    losses: 'இழப்பு', feed: 'தீவனம்', pairs: 'இணை சேர்க்கை' };
+  const HIST_LABELS = {
+    birds: { breed: 'இனம்', count: 'எண்ணிக்கை', batch: 'Batch', age: 'வயது', date: 'வாங்கிய தேதி' },
+    eggs: { count: 'முட்டை எண்ணிக்கை', date: 'தேதி', broken: 'உடைந்தவை', hatchery: 'Hatchery / அடை',
+      sent: 'கொடுத்த தேதி / வைத்த தேதி', collect: 'வாங்கும் தேதி', hatch: 'பொறிப்பு தேதி' },
+    accounts: { type: 'வகை', category: 'பிரிவு', amount: 'தொகை (₹)', note: 'விவரம்', batch: 'Batch',
+      eggs: 'விற்ற முட்டை', feedItem: 'தீவன வகை', date: 'தேதி' },
+    alerts: { text: 'நினைவூட்டல்', date: 'தேதி' },
+    losses: { age: 'வயது வகை', reason: 'காரணம்', batch: 'Batch', count: 'எண்ணிக்கை', date: 'தேதி' },
+    feed: { type: 'வகை', item: 'பொருள்', kg: 'கிலோ', amt: 'விலை (₹)', date: 'தேதி' },
+    pairs: { name: 'பெயர்', date: 'தேதி' }
+  };
+  function historyDetails(section, x) {
+    const out = [];
+    const labels = HIST_LABELS[section];
+    Object.keys(labels).forEach(k => {
+      let v = x[k];
+      if (v === undefined || v === null || v === '') return;
+      if (k === 'type') v = section === 'accounts' ? (v === 'in' ? 'வரவு' : 'செலவு') : (v === 'in' ? 'வாங்கியது' : 'பயன்படுத்தியது');
+      if (k === 'amount' || k === 'amt') v = Number(v).toFixed(2);
+      out.push([labels[k], String(v)]);
+    });
+    if (section === 'pairs') out.push(['சேவல் படம்', x.rooster || 'இல்லை'], ['பெட்டை படம்', x.hen || 'இல்லை']);
+    return out;
+  }
+  $('confirmYes').addEventListener('click', () => {
+    const p = pendingDelete;
+    pendingDelete = null;
+    $('confirmBox').style.display = 'none';
+    if (!p) return;
+    localStorage.setItem(UNDO_KEY, JSON.stringify({ savedAt: new Date().toISOString(), state: state }));
+    const before = {};
+    HIST_KEYS.forEach(k => { before[k] = state[k].slice(); });
+    p.fn();
+    if (!p.label) return;
+    HIST_KEYS.forEach(k => {
+      const remaining = new Set(state[k].map(x => x.id));
+      before[k].filter(x => !remaining.has(x.id)).forEach(x => {
+        state.history.unshift({ id: uid(), section: HIST_SECTION[k], text: 'நீக்கப்பட்டது',
+          when: new Date().toLocaleString('ta-IN'), details: historyDetails(k, x) });
+      });
+    });
+  });
+
+  const FEED_ITEMS = ['அரிசி', 'கம்பு', 'சோளம்', 'தீவனம்', 'கம்பெனி தீவனம்', 'இதர பொருட்கள்'];
+  ['feedItem', 'useItem'].forEach(id => {
+    const sel = $(id);
+    FEED_ITEMS.forEach(x => { const o = document.createElement('option'); o.value = x; o.textContent = x; sel.appendChild(o); });
+  });
+
+  $('feedForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.feed.push({ id: uid(), type: 'in', item: $('feedItem').value,
+      kg: Number($('feedKg').value), amt: Number($('feedAmt').value || 0), date: $('feedDate').value });
+    e.target.reset(); $('feedDate').value = todayStr; renderAll();
+  });
+
+  $('useForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const item = $('useItem').value, kg = Number($('useKg').value);
+    if (kg > itemStock(item)) { alert(item + ' இருப்பு ' + itemStock(item).toFixed(1) + ' கிலோ மட்டுமே உள்ளது.'); return; }
+    state.feed.push({ id: uid(), type: 'out', item: item, kg: kg, amt: 0, date: $('useDate').value });
+    e.target.reset(); $('useDate').value = todayStr; renderAll();
+  });
+  $('saveMin').addEventListener('click', () => {
+    state.feedMin = Math.max(0, Number($('feedMin').value) || 0);
+    renderAll();
+  });
+  const CATS = {
+    in: ['முட்டை விற்பனை', 'கோழி குஞ்சு விற்பனை', 'கோழி விற்பனை'],
+    out: ['மருந்து செலவு', 'புதிய கோழி செலவு', 'இதர செலவு']
+  };
+  function fillCats() {
+    const t = $('accType').value;
+    const sel = $('accCategory');
+    const prev = sel.value;
+    sel.innerHTML = '';
+    CATS[t].forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+    if (CATS[t].includes(prev)) sel.value = prev;
+    toggleOther();
+  }
+  function toggleOther() {
+    const show = $('accType').value === 'out' && $('accCategory').value === 'இதர செலவு';
+    $('accOtherWrap').classList.toggle('hidden', !show);
+    const showEggs = $('accType').value === 'in' && $('accCategory').value === 'முட்டை விற்பனை';
+    $('accEggWrap').classList.toggle('hidden', !showEggs);
+    const feedMode = $('accType').value === 'out' && $('accCategory').value === 'தீவனம் செலவு';
+    const otherMode = $('accType').value === 'out' && $('accCategory').value === 'இதர செலவு';
+    $('accNoteWrap').classList.toggle('hidden', feedMode || otherMode);
+    $('accBatchWrap').classList.toggle('hidden', $('accType').value !== 'in');
+    $('accFeedWrap').classList.toggle('hidden', !feedMode);
+    if (feedMode) fillAccFeed();
+  }
+  function fillAccFeed() {
+    const sel = $('accFeedItem');
+    const prev = sel.value;
+    sel.innerHTML = '';
+    ['அரிசி', 'கம்பு', 'சோளம்', 'தீவனம்', 'கம்பெனி தீவனம்', 'இதர பொருட்கள்'].forEach(x => {
+      const o = document.createElement('option');
+      o.value = x;
+      o.textContent = x + ' (' + itemStock(x).toFixed(1) + ' கிலோ)';
+      sel.appendChild(o);
+    });
+    if (prev) sel.value = prev;
+    $('accFeedStock').textContent = 'இருப்பு: ' + itemStock(sel.value).toFixed(1) + ' கிலோ';
+  }
+  $('accFeedItem').addEventListener('change', fillAccFeed);
+  $('accType').addEventListener('change', fillCats);
+  $('accCategory').addEventListener('change', toggleOther);
+  fillCats();
+
+  $('accForm').addEventListener('submit', e => {
+    e.preventDefault();
+    let category = $('accCategory').value;
+    const feedItem = (category === 'தீவனம் செலவு') ? $('accFeedItem').value : '';
+    if (category === 'இதர செலவு') {
+      const other = $('accOther').value.trim();
+      if (!other) { alert('இதர செலவின் பெயரை எழுதவும்.'); return; }
+      category = other;
+    }
+    const feedKg = Number($('accFeedKg').value || 0);
+    if (feedItem && !(feedKg > 0)) { alert('தீவனத்தின் கிலோ அளவை உள்ளிடவும்.'); return; }
+    if (feedItem) {
+      state.feed.push({ id: uid(), type: 'in', item: feedItem, kg: feedKg, amt: 0,
+        date: $('accDate').value, fromAccount: true });
+    }
+    state.accounts.push({ id: uid(), type: $('accType').value, category: category, kg: feedKg,
+      amount: Number($('accAmount').value), note: feedItem || ($('accNoteWrap').classList.contains('hidden') ? '' : $('accNote').value.trim()),
+      batch: $('accType').value === 'in' ? $('accBatch').value : '', date: $('accDate').value, feedItem: feedItem,
+      eggs: category === 'முட்டை விற்பனை' ? Number($('accEggs').value || 0) : 0 });
+    e.target.reset(); $('accDate').value = todayStr; fillCats(); renderAll();
+  });
+  $('alertForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.alerts.push({ id: uid(), text: $('alertText').value.trim(), date: $('alertDate').value });
+    e.target.reset(); $('alertDate').value = todayStr; renderAll();
+  });
+
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      Object.assign(state, DEFAULTS, JSON.parse(raw));
+    } else {
+      const auto = localStorage.getItem(BACKUP_KEY);
+      if (auto) Object.assign(state, DEFAULTS, JSON.parse(auto).state);
+    }
+  } catch (err) { console.error(err); }
+  ready = true;
+  renderAll();
+  $('saveState').textContent = '✓ சேமிக்கப்பட்டது';
+</script>
+<script>
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+  // ---------- Poultry diseases, medicines and vaccine schedule ----------
+  const GUIDE = {"diseases":[{"name_ta":"வெள்ளைக்கழிச்சல் (ராணிகெட்)","name_en":"Ranikhet Disease / Newcastle Disease","category":"வைரஸ்","severity":"மிக அதிகம்","mortality":"80–100%","symptoms":["பச்சை அல்லது வெள்ளை கழிச்சல்","கழுத்து முறுக்குதல்","மூச்சுத் திணறல்","சிறகுகள் தொங்குதல்","திடீர் இறப்பு","முட்டை உற்பத்தி குறைவு"],"prevention":["Lasota மற்றும் R2B/RDVK தடுப்பூசிகளை அட்டவணைப்படி போடுதல்","பூஸ்டர் டோஸ்களைத் தவறாமல் கொடுத்தல்","புதிய கோழிகளைத் தனிமைப்படுத்துதல்"],"medicines":["நேரடி மருந்து இல்லை","இரண்டாம் நிலை பாக்டீரியா தொற்றுக்கு Enrofloxacin அல்லது Doxycycline (மருத்துவர் பரிந்துரை)","எலக்ட்ரோலைட், வைட்டமின் B-complex, வைட்டமின் E ஆதரவு"],"notes":"அரசு அறிவிக்கக்கூடிய நோய். சந்தேகம் இருந்தால் உடனே கால்நடைத் துறைக்குத் தெரிவிக்கவும்."},{"name_ta":"பறவைக் காய்ச்சல் (H5N1 / H5N8)","name_en":"Avian Influenza","category":"வைரஸ்","severity":"மிக அதிகம்","mortality":"அதிகம்","symptoms":["திடீர் இறப்பு","தலை, கழுத்து, கண் வீக்கம்","கொண்டை மற்றும் கால்கள் நீலமாதல்","முட்டை உற்பத்தி திடீர் குறைவு","தீவனம் சாப்பிடாமை"],"prevention":["காட்டுப் பறவைகள் நுழையாத வலை அமைத்தல்","வெளியாட்கள் மற்றும் வாகனக் கட்டுப்பாடு","அரசு அறிவிக்கும் பகுதிகளில் அறிவுறுத்தப்பட்ட தடுப்பூசி மட்டும்"],"medicines":["குணப்படுத்த மருந்து இல்லை","அரசு உத்தரவின்படி அழித்தல் மற்றும் இழப்பீடு நடைமுறை","மனிதர்களுக்கும் பரவ வாய்ப்பு உள்ளதால் கையுறை, முகக்கவசம் அவசியம்"],"notes":"அரசு அறிவிக்கக்கூடிய நோய். உடனே கால்நடைத் துறைக்குத் தெரிவிக்கவும்."},{"name_ta":"கம்போரோ (Gumboro / IBD)","name_en":"Infectious Bursal Disease","category":"வைரஸ்","severity":"அதிகம்","mortality":"மாறுபடும்","symptoms":["சோர்வு மற்றும் தீவனம் குறைவு","பின்பக்கத்தில் ஈரம் அல்லது ஒட்டுதல்","வெள்ளை நீர் கழிச்சல்","நடுக்கம், தலை கீழே தொங்குதல்","இரண்டாம் நிலை நோய்த் தொற்று"],"prevention":["14–21 நாள் வயதில் IBD தடுப்பூசி","பூஸ்டர் டோஸ் கொடுத்தல்","கொட்டகையை சுத்தமாகவும் உலர்வாகவும் வைத்தல்"],"medicines":["நேரடி மருந்து இல்லை","எலக்ட்ரோலைட் மற்றும் வைட்டமின் K, வைட்டமின் C ஆதரவு","பாக்டீரியா தொற்றுக்கு மருத்துவர் பரிந்துரைக்கும் antibiotic"],"notes":"தடுப்பூசி போடாத குஞ்சுகளில் அதிக இழப்பு ஏற்படும்."},{"name_ta":"மாரெக்ஸ் (Marek's)","name_en":"Marek's Disease","category":"வைரஸ்","severity":"அதிகம்","mortality":"அதிகம்","symptoms":["கால் அல்லது இறக்கை முடக்கம்","கண்மணி சாம்பல் நிறமாதல்","உடலில் கட்டிகள்","எடை குறைவு"],"prevention":["குஞ்சு பிறந்த முதல் நாளிலேயே HVT தடுப்பூசி (பொதுவாக ஹேட்சரியில்)"],"medicines":["குணப்படுத்த மருந்து இல்லை","பாதிக்கப்பட்ட கோழிகளை தனிமைப்படுத்தி அழித்தல்"],"notes":"தடுப்பூசி மட்டுமே பாதுகாப்பு வழி."},{"name_ta":"அம்மை (Fowl Pox)","name_en":"Fowl Pox","category":"வைரஸ்","severity":"நடுத்தரம்","mortality":"மாறுபடும்","symptoms":["சீப்பு, முகம், கண்ணிமைகளில் கொப்புளம் மற்றும் புண்","வாயில் மஞ்சள் படலம் (ஈரமான வடிவம்)","சுவாசத் திணறல்","முட்டை குறைவு"],"prevention":["6–8 வார வயதில் Fowl pox தடுப்பூசி (இறக்கைத் தோலில் குத்தும் முறை)","கொசு மற்றும் ஈக்களைக் கட்டுப்படுத்துதல்"],"medicines":["நேரடி மருந்து இல்லை","புண்களை Povidone-iodine போன்ற கிருமிநாசினியால் சுத்தம் செய்தல்","இரண்டாம் நிலை தொற்றுக்கு மருத்துவர் பரிந்துரை antibiotic","வைட்டமின் A ஆதரவு"],"notes":""},{"name_ta":"தொற்று மூச்சுக்குழல் அழற்சி (IB)","name_en":"Infectious Bronchitis","category":"வைரஸ்","severity":"அதிகம்","mortality":"குஞ்சுகளில் அதிகம்","symptoms":["தும்மல் மற்றும் மூச்சுச் சத்தம்","கண்களில் நீர் வடிதல்","முட்டை ஓடு மற்றும் வடிவம் மாறுதல்","முட்டை உற்பத்தி குறைவு"],"prevention":["குஞ்சுப் பருவத்தில் IB தடுப்பூசி (H120 போன்றவை)","பூஸ்டர் டோஸ் கொடுத்தல்"],"medicines":["நேரடி மருந்து இல்லை","இரண்டாம் நிலை தொற்றுக்கு Oxytetracycline அல்லது Enrofloxacin (மருத்துவர் பரிந்துரை)","வைட்டமின் A, C, E ஆதரவு"],"notes":""},{"name_ta":"முட்டை வீழ்ச்சி நோய் (EDS)","name_en":"Egg Drop Syndrome","category":"வைரஸ்","severity":"நடுத்தரம்","mortality":"குறைவு","symptoms":["ஓடு இல்லாத அல்லது மென்மையான முட்டைகள்","முட்டை உற்பத்தி திடீர் வீழ்ச்சி","முட்டை நிறம் மங்குதல்"],"prevention":["16–18 வார வயதில் EDS தடுப்பூசி (முட்டை உற்பத்திக்கு முன்)"],"medicines":["நேரடி மருந்து இல்லை","கால்சியம் மற்றும் வைட்டமின் D3 கூடுதல் (மருத்துவர் ஆலோசனைப்படி)"],"notes":""},{"name_ta":"தொற்று குரல்வளை-மூச்சுக்குழல் அழற்சி (ILT)","name_en":"Infectious Laryngotracheitis","category":"வைரஸ்","severity":"அதிகம்","mortality":"மாறுபடும்","symptoms":["இருமல் மற்றும் மூச்சுத் திணறல்","இரத்தம் கலந்த சளி","கண் வீக்கம்","முட்டை உற்பத்தி குறைவு"],"prevention":["ILT தடுப்பூசி (கண் அல்லது மூக்கு வழியாக)"],"medicines":["நேரடி மருந்து இல்லை","இரண்டாம் நிலை தொற்றுக்கு மருத்துவர் பரிந்துரை antibiotic","ஆதரவு சிகிச்சை மற்றும் காற்றோட்டம்"],"notes":""},{"name_ta":"நரம்பு மண்டல அழற்சி (AE)","name_en":"Avian Encephalomyelitis","category":"வைரஸ்","severity":"நடுத்தரம்","mortality":"இளம் குஞ்சுகளில் அதிகம்","symptoms":["நடுக்கம் மற்றும் தள்ளாட்டம்","சமநிலை இழத்தல்","கண் பாதிப்பு","முட்டை உற்பத்தி குறைவு (பெட்டைக் கோழிகளில்)"],"prevention":["8–10 வார வயதில் AE தடுப்பூசி (பெட்டைக் கோழிகளுக்கு)"],"medicines":["நேரடி மருந்து இல்லை","ஆதரவு சிகிச்சை மற்றும் வைட்டமின் E"],"notes":""},{"name_ta":"ஃபௌல் காலரா (Fowl Cholera)","name_en":"Fowl Cholera (Pasteurella multocida)","category":"பாக்டீரியா","severity":"அதிகம்","mortality":"அதிகம்","symptoms":["திடீர் காய்ச்சல் மற்றும் இறப்பு","தலை, கண், தாடை வீக்கம்","மூச்சுத் திணறல்","பச்சை நிற கழிச்சல்","முட்டை குறைவு"],"prevention":["தடுப்பூசி (பண்ணையின் நிலைக்கு ஏற்ப)","சுத்தமான குடிநீர் மற்றும் உலர்ந்த குப்பை","காட்டுப் பறவைகளைத் தடுத்தல்"],"medicines":["Enrofloxacin, Tylosin, Oxytetracycline அல்லது Sulphonamides (மருத்துவர் பரிந்துரை)","மருந்து நிறுத்தக் காலத்தை (withdrawal period) கவனித்தல்"],"notes":""},{"name_ta":"கோலிபேசிலோசிஸ் (E. coli)","name_en":"Colibacillosis","category":"பாக்டீரியா","severity":"அதிகம்","mortality":"மாறுபடும்","symptoms":["வெள்ளை அல்லது பச்சை கழிச்சல்","வயிறு வீக்கம்","மூச்சுத் திணறல்","இதயம் அல்லது கல்லீரல் பாதிப்பு","திடீர் இறப்பு"],"prevention":["சுத்தமான குடிநீர் மற்றும் தீவனம்","கொட்டகை மற்றும் முட்டைகளைச் சுத்தம் செய்தல்","பண்ணை சார்ந்த தடுப்பூசி (மருத்துவர் பரிந்துரை)"],"medicines":["Enrofloxacin, Doxycycline அல்லது Colistin (மருத்துவர் பரிந்துரை)","Probiotic ஆதரவு"],"notes":""},{"name_ta":"சால்மோனெல்லா (பல்லோரம் / ஃபௌல் டைபாய்டு)","name_en":"Pullorum / Fowl Typhoid","category":"பாக்டீரியா","severity":"அதிகம்","mortality":"குஞ்சுகளில் அதிகம்","symptoms":["குஞ்சுகளில் வெள்ளை கழிச்சல்","வென்ட் பகுதியில் ஒட்டிய வெள்ளை மலம்","மூச்சு விடுவதில் சிரமம்","வளர்ச்சி குறைவு","பெரிய கோழிகளில் முட்டை குறைவு"],"prevention":["நோயற்ற பெற்றோர் மந்தையிலிருந்து குஞ்சுகள் வாங்குதல்","முட்டை மற்றும் குஞ்சு பொரிப்பகத்தைச் சுத்தம் செய்தல்"],"medicines":["மருத்துவர் பரிந்துரைக்கும் antibiotic மட்டும்","பாதிக்கப்பட்ட கோழிகளைத் தனிமைப்படுத்துதல்"],"notes":""},{"name_ta":"நாள்பட்ட சுவாச நோய் (CRD / Mycoplasma)","name_en":"Chronic Respiratory Disease (Mycoplasma gallisepticum)","category":"பாக்டீரியா (Mycoplasma)","severity":"நடுத்தரம்","mortality":"குறைவு, ஆனால் பொருளாதார இழப்பு அதிகம்","symptoms":["தும்மல் மற்றும் மூக்கு ஒழுகல்","மூச்சு விடுதல் சத்தம்","முகம் மற்றும் கண் வீக்கம்","முட்டை குறைவு","வளர்ச்சி குறைவு"],"prevention":["Mycoplasma இல்லாத மந்தையிலிருந்து குஞ்சுகள் வாங்குதல்","பண்ணை சுத்தம் மற்றும் காற்றோட்டம்","MG தடுப்பூசி (மருத்துவர் பரிந்துரை)"],"medicines":["Tylosin, Tiamulin, Doxycycline அல்லது Enrofloxacin (மருத்துவர் பரிந்துரை)"],"notes":""},{"name_ta":"நெக்ரோடிக் என்டரைட்டிஸ் (Necrotic Enteritis)","name_en":"Necrotic Enteritis (Clostridium perfringens)","category":"பாக்டீரியா","severity":"அதிகம்","mortality":"மாறுபடும்","symptoms":["திடீர் இறப்பு","கருப்பு அல்லது துர்நாற்றமுள்ள கழிச்சல்","சோர்வு","வளர்ச்சி குறைவு (கறிக்கோழிகளில்)"],"prevention":["குப்பையைச் சுத்தமாகவும் உலர்வாகவும் வைத்தல்","கோசிடியோசிஸ் கட்டுப்பாடு","தீவனத்தில் புரத அளவைச் சமநிலைப்படுத்துதல்"],"medicines":["Bacitracin அல்லது Enrofloxacin (மருத்துவர் பரிந்துரை)","Probiotic ஆதரவு"],"notes":""},{"name_ta":"கோசிடியோசிஸ் (Coccidiosis)","name_en":"Coccidiosis (Eimeria)","category":"ஒட்டுண்ணி","severity":"அதிகம்","mortality":"மாறுபடும்","symptoms":["இரத்தம் கலந்த கழிச்சல்","சோர்வு மற்றும் இறகுகள் பறந்தவை போல் தோன்றுதல்","தீவனம் குறைவு","எடை குறைவு"],"prevention":["குப்பையை உலர்வாக வைத்தல்","தீவனத்தில் anticoccidial சேர்த்தல் (மருத்துவர் ஆலோசனை)","பெட்டைக் கோழிகளுக்கு live vaccine"],"medicines":["Amprolium","Sulphaquinoxaline","Toltrazuril அல்லது Diclazuril (மருத்துவர் அளவு)"],"notes":""},{"name_ta":"உருண்டைப் புழு மற்றும் நாடாப்புழு","name_en":"Roundworm and Tapeworm","category":"ஒட்டுண்ணி","severity":"நடுத்தரம்","mortality":"குறைவு","symptoms":["உடல் மெலிவு","வளர்ச்சி குறைவு","கழிவில் புழுக்கள்","முட்டை குறைவு"],"prevention":["3 மாதத்துக்கு ஒருமுறை குடற்புழு நீக்கம்","கோழி எச்சம் மற்றும் குப்பையை முறையாக அகற்றுதல்","நத்தை மற்றும் ஈக்களைக் கட்டுப்படுத்துதல்"],"medicines":["Albendazole, Levamisole அல்லது Piperazine (மருத்துவர் அளவு)"],"notes":""},{"name_ta":"வெளிஒட்டுண்ணிகள் (பேன், உண்ணி, சிரங்குப் பூச்சி)","name_en":"External Parasites (Lice, Mites, Ticks)","category":"ஒட்டுண்ணி","severity":"நடுத்தரம்","mortality":"குறைவு","symptoms":["இறகு உதிர்தல்","அரிப்பு மற்றும் அமைதியின்மை","இரத்த சோகை","முட்டை குறைவு"],"prevention":["கொட்டகையைத் தவறாமல் கிருமிநீக்கம் செய்தல்","வைக்கோல் மற்றும் குப்பையை மாற்றுதல்"],"medicines":["Permethrin அல்லது Malathion தூள் அல்லது ஸ்ப்ரே","Ivermectin (மருத்துவர் பரிந்துரை)"],"notes":""},{"name_ta":"கருந்தலை நோய் (Histomoniasis)","name_en":"Blackhead Disease (Histomonas)","category":"ஒட்டுண்ணி","severity":"அதிகம்","mortality":"அதிகம்","symptoms":["தலை கருத்தல்","பசியின்மை","மஞ்சள் நிற கழிச்சல்","சோர்வு"],"prevention":["இளம் கோழிகளை பெரிய கோழிகளிடமிருந்து பிரித்தல்","குப்பை மற்றும் கொட்டகை சுத்தம்"],"medicines":["மருத்துவர் பரிந்துரைத்த மருந்து மட்டும்"],"notes":""},{"name_ta":"ஆஸ்பெர்ஜில்லோசிஸ் (Aspergillosis)","name_en":"Aspergillosis","category":"பூஞ்சை","severity":"அதிகம்","mortality":"குஞ்சுகளில் அதிகம்","symptoms":["மூச்சுத் திணறல்","திறந்த வாயால் மூச்சு விடுதல்","மெலிவு","குஞ்சுகளில் திடீர் இறப்பு"],"prevention":["ஈரமான தீவனம் மற்றும் குப்பையைத் தவிர்த்தல்","நல்ல காற்றோட்டம்","பூஞ்சை இல்லாத தீவனம்"],"medicines":["மருத்துவர் பரிந்துரைக்கும் antifungal மருந்து","பாதிப்புள்ள தீவனம் மற்றும் குப்பையை மாற்றுதல்"],"notes":""},{"name_ta":"பூஞ்சை நச்சுத் தீவனப் பாதிப்பு (Aflatoxicosis)","name_en":"Mycotoxicosis / Aflatoxicosis","category":"நச்சு","severity":"அதிகம்","mortality":"மாறுபடும்","symptoms":["எடை குறைவு","கல்லீரல் பாதிப்பு","வளர்ச்சி குறைவு","இரத்தக் கசிவு","முட்டை குறைவு"],"prevention":["தீவனத்தை ஈரமில்லாமல் சேமித்தல்","பூஞ்சை சோதனை செய்தல்","Mycotoxin binder பயன்படுத்துதல் (மருத்துவர் ஆலோசனை)"],"medicines":["நேரடி மருந்து இல்லை","Liver tonic மற்றும் Mycotoxin binder (மருத்துவர் ஆலோசனை)","பாதிப்புள்ள தீவனத்தை நிறுத்துதல்"],"notes":""},{"name_ta":"வைட்டமின் மற்றும் தாதுக் குறைபாடு","name_en":"Nutritional Deficiency","category":"ஊட்டச்சத்துக் குறைபாடு","severity":"நடுத்தரம்","mortality":"குறைவு","symptoms":["வைட்டமின் A: கண்ணில் நீர், மூக்கு ஒழுகல்","வைட்டமின் D3: எலும்பு வளைதல்","வைட்டமின் E மற்றும் செலினியம்: தசை பலவீனம்","கால்சியம்: மெல்லிய முட்டை ஓடு","வைட்டமின் B: கால் பாதிப்பு"],"prevention":["சமச்சீர் தீவனம்","பசுமைத் தீவனம் மற்றும் தரமான premix"],"medicines":["Vitamin premix","Calcium supplement (மருத்துவர் அளவு)"],"notes":""}],"vaccines":[{"age":"1-ஆம் நாள்","vaccine":"மாரெக்ஸ் (HVT)","disease":"மாரெக்ஸ்","route":"தோலுக்கடியில் (ஹேட்சரியில்)"},{"age":"5–7 நாள்","vaccine":"ராணிகெட் (Lasota / R2B) முதல் டோஸ்","disease":"ராணிகெட் (ND)","route":"கண்/மூக்குச் சொட்டு அல்லது குடிநீர்"},{"age":"7–10 நாள்","vaccine":"IB (H120) முதல் டோஸ்","disease":"தொற்று மூச்சுக்குழல் அழற்சி (IB)","route":"கண்/மூக்குச் சொட்டு"},{"age":"14 நாள்","vaccine":"கம்போரோ (IBD) முதல் டோஸ்","disease":"கம்போரோ (IBD)","route":"குடிநீர்"},{"age":"21 நாள்","vaccine":"ராணிகெட் (Lasota) பூஸ்டர்; IB (Massachusetts) டோஸ்","disease":"ராணிகெட், IB","route":"குடிநீர்"},{"age":"28 நாள்","vaccine":"கம்போரோ (IBD) பூஸ்டர்","disease":"கம்போரோ (IBD)","route":"குடிநீர்"},{"age":"6–8 வாரம்","vaccine":"Fowl pox தடுப்பூசி","disease":"அம்மை (Fowl Pox)","route":"இறக்கைத் தோலில் குத்துதல்"},{"age":"8–10 வாரம்","vaccine":"ND + IB கூட்டு தடுப்பூசி; AE தடுப்பூசி (பெட்டைக் கோழி)","disease":"ராணிகெட், IB, AE","route":"குடிநீர் அல்லது ஊசி"},{"age":"10–12 வாரம்","vaccine":"ராணிகெட் பூஸ்டர்; ILT தடுப்பூசி","disease":"ராணிகெட், ILT","route":"குடிநீர் அல்லது கண்/மூக்குச் சொட்டு"},{"age":"14–16 வாரம்","vaccine":"Mycoplasma (MG) தடுப்பூசி (மருத்துவர் பரிந்துரைப்படி)","disease":"CRD (Mycoplasma)","route":"ஊசி"},{"age":"16–18 வாரம் (முட்டைக் கோழி)","vaccine":"ND + IB + EDS கூட்டு உயிரற்ற (killed) தடுப்பூசி","disease":"ராணிகெட், IB, EDS","route":"தோலுக்கடியில் அல்லது தசையில் ஊசி"},{"age":"நாட்டுக்கோழி: 7 நாள் & 1 மாதம்","vaccine":"ராணிகெட் R2B / Lasota","disease":"ராணிகெட் (ND)","route":"கண்/மூக்குச் சொட்டு அல்லது குடிநீர்"},{"age":"நாட்டுக்கோழி: 8 வாரம்","vaccine":"Fowl pox தடுப்பூசி","disease":"அம்மை (Fowl Pox)","route":"இறக்கைத் தோலில் குத்துதல்"},{"age":"பறவைக் காய்ச்சல்","vaccine":"அரசு அறிவித்தால் மட்டும்","disease":"பறவைக் காய்ச்சல்","route":"கால்நடைத் துறை வழிகாட்டுதல்"},{"age":"ஒவ்வொரு 3 மாதம்","vaccine":"குடற்புழு நீக்கம் (மருந்து)","disease":"உருண்டைப் புழு, நாடாப்புழு","route":"வாய் வழியாக"}]};
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function label(text, value) {
+    const p = el('div', 'meta');
+    p.style.cssText = 'margin-top:8px;color:var(--text)';
+    p.append(el('b', '', text + ': '), document.createTextNode(value || '-'));
+    return p;
+  }
+  function bullets(title, items) {
+    const wrap = el('div', 'meta');
+    wrap.style.cssText = 'margin-top:8px;color:var(--text)';
+    wrap.appendChild(el('b', '', title + ':'));
+    (items || []).forEach(t => {
+      const li = el('div', '', '• ' + t);
+      li.style.cssText = 'margin-left:10px;margin-top:3px';
+      wrap.appendChild(li);
+    });
+    return wrap;
+  }
+
+  function renderDiseases(q) {
+    const box = $('diseaseList');
+    box.innerHTML = '';
+    const term = (q || '').trim().toLowerCase();
+    const list = GUIDE.diseases.filter(d => !term || [d.name_ta, d.name_en, d.category, ...d.symptoms]
+      .join(' ').toLowerCase().includes(term));
+    if (!list.length) { box.appendChild(el('div', 'empty', 'பொருந்தும் நோய்கள் இல்லை')); return; }
+    list.forEach(d => {
+      const det = document.createElement('details');
+      det.style.cssText = 'padding:10px 0;border-bottom:1px solid var(--bg)';
+      const sm = el('summary', '', d.name_ta + ' (' + d.name_en + ')');
+      sm.style.cssText = 'cursor:pointer;font-weight:700;padding:4px 0';
+      det.appendChild(sm);
+      det.append(
+        label('வகை', d.category),
+        label('தீவிரம்', d.severity),
+        label('இறப்பு விகிதம்', d.mortality),
+        bullets('அறிகுறிகள்', d.symptoms),
+        bullets('தடுப்பு முறைகள்', d.prevention),
+        bullets('மருந்துகள் (மருத்துவர் ஆலோசனைப்படி மட்டும்)', d.medicines)
+      );
+      if (d.notes) det.appendChild(label('குறிப்பு', d.notes));
+      box.appendChild(det);
+    });
+  }
+
+  function renderVaccines() {
+    const box = $('vaccineList');
+    box.innerHTML = '';
+    GUIDE.vaccines.forEach(v => {
+      const w = el('div', 'entry');
+      w.style.cssText = 'display:block;padding:10px 0;border-bottom:1px solid var(--bg)';
+      w.appendChild(el('div', 'main', v.age));
+      w.append(label('தடுப்பூசி', v.vaccine), label('நோய்', v.disease), label('செலுத்தும் முறை', v.route));
+      box.appendChild(w);
+    });
+    box.appendChild(el('div', 'alert', 'இது பொதுவான வழிகாட்டி. தடுப்பூசி நிறுவனம், கோழி வகை மற்றும் பகுதிக்கு ஏற்ப கால்நடை மருத்துவரிடம் அட்டவணையை உறுதி செய்யவும்.'));
+  }
+
+  $('dsSearch').addEventListener('input', e => renderDiseases(e.target.value));
+  renderDiseases('');
+  renderVaccines();
+</script>
+</body>
+</html>
