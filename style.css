@@ -230,3 +230,8 @@
   .app-footer { text-align: center; padding: 18px 12px 24px; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: #6b5a2e; }
   .ptile { aspect-ratio: 1 / 1; border-radius: 16px; border: 2px solid #d4a72c; background: #ffffff; color: #1b2230; font-size: 14px; font-weight: 700; padding: 6px; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.25; }
   .ptile.on { background: linear-gradient(160deg, #2e8b57, #1f6b43); color: #ffffff; border-color: #d4a72c; }
+
+
+/* steadier screen when a record is saved */
+html, body { overflow-anchor: none; }
+.saving { height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
